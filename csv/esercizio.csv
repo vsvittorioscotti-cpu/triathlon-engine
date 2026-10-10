@@ -1,0 +1,185 @@
+nome,famiglia,sottocat,distretto,funzione,attrezzo,n_nuoto,b_bici,c_corsa,serie,rip,rec,livello,fasi,fatica,doms,collocazione,reps_base,reps_peak,alternative
+Back Squat,Forza massima,Bilaterale,quadricipiti/glutei/core,forza generale arti inferiori,bilanciere,0,3,3,4,5,180,int,BU,5,4,almeno 48 h prima del lungo,5-7,3-4,Front Squat / Trap Bar Deadlift
+Front Squat,Forza massima,Bilaterale,quadricipiti/core,forza e controllo del tronco,bilanciere,0,3,3,4,5,180,avz,BU,5,4,almeno 48 h prima del lungo,5-7,3-4,Back Squat / Trap Bar Deadlift
+Trap Bar Deadlift,Forza massima,Bilaterale,glutei/femorali/quadricipiti,estensione potente dell'anca,trap bar,0,3,3,4,4,180,int,BUS,5,4,almeno 48 h prima del lungo,4-6,3-4,Back Squat / Front Squat
+Romanian Deadlift,Forza massima,Bilaterale,femorali/glutei,catena posteriore,bilanciere,0,3,3,3,6,150,int,BUS,5,4,almeno 48 h prima del lungo,6-8,4-5,Back Squat / Front Squat
+Leg Press,Forza massima,Bilaterale,quadricipiti/glutei,forza elevata a basso rischio,macchina,0,3,2,4,8,150,prn,BU,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Belt Squat / Hack Squat
+Hack Squat,Forza massima,Bilaterale,quadricipiti,sviluppo forza quadricipite,macchina,0,2,2,3,8,150,int,BU,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Leg Curl / Air Squat
+Hip Thrust,Forza massima,Bilaterale,glutei,estensione dell'anca,bilanciere,0,3,2,4,8,120,prn,BUS,5,4,almeno 48 h prima del lungo,8-10,6-7,Leg Press / Belt Squat
+Bulgarian Split Squat,Forza funzionale,Single leg,glutei/quadricipiti,forza monopodalica,manubri,0,3,3,3,6,120,int,BUSP,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",6-8,4-5,Single-leg Leg Press / Single-leg Hip Thrust
+Split Squat,Forza funzionale,Single leg,quadricipiti/glutei,controllo monopodalico,manubri,0,2,3,3,8,90,prn,BU,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Single-leg RDL / Single-leg Glute Bridge
+Reverse Lunge,Forza funzionale,Bilaterale,glutei/quadricipiti,forza e stabilita',manubri,0,2,3,3,8,90,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Walking Lunge / Nordic Curl assistito
+Walking Lunge,Forza funzionale,Bilaterale,glutei/quadricipiti,forza dinamica,manubri,0,2,3,3,10,90,prn,BU,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Reverse Lunge / Nordic Curl assistito
+Step-up alto,Forza funzionale,Bilaterale,glutei/quadricipiti,estensione dell'anca,panca/manubri,0,3,3,3,8,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Reverse Lunge / Walking Lunge
+Step-down,Forza funzionale,Stabilita anca,quadricipiti/gluteo medio,controllo eccentrico,panca,0,1,3,3,8,90,prn,BU,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Skater Jump / Curtsy Lunge
+Single-leg Leg Press,Forza funzionale,Single leg,quadricipiti/glutei,forza unilaterale controllata,macchina,0,3,3,3,8,120,prn,BU,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Bulgarian Split Squat / Single-leg Hip Thrust
+Single-leg RDL,Forza funzionale,Single leg,femorali/glutei,stabilita' e catena posteriore,manubri,0,2,3,3,6,90,int,BUSP,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",6-8,4-5,Split Squat / Single-leg Glute Bridge
+Leg Extension,Forza massima,Bilaterale,quadricipiti,accessorio quadricipite,macchina,0,2,1,3,12,90,prn,B,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",12-14,10-11,Wall Sit / Hack Squat
+Leg Curl,Forza massima,Bilaterale,femorali,equilibrio muscolare,macchina,0,2,2,3,12,90,prn,B,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",12-14,10-11,Hack Squat / Air Squat
+Standing Calf Raise,Prevenzione,Spinta,gastrocnemio,spinta e ritorno elastico,macchina/manubri,0,1,3,3,8,90,prn,BUSP,1,1,"libera, anche nei giorni facili",8,5,-
+Seated Calf Raise,Prevenzione,Piede e caviglia,soleo,resistenza del soleo,macchina,0,1,3,3,10,90,prn,BUSP,1,1,"libera, anche nei giorni facili",10,7,Bent-knee Calf Raise / Tibialis Raise
+Single-leg Calf Raise,Prevenzione,Single leg,soleo/gastrocnemio,forza monopodalica del polpaccio,corpo libero,0,1,3,3,12,60,prn,BUSP,1,1,"libera, anche nei giorni facili",12,8,Single-leg Balance
+Bent-knee Calf Raise,Prevenzione,Piede e caviglia,soleo,isolamento del soleo,corpo libero,0,1,3,3,15,60,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Seated Calf Raise / Tibialis Raise
+Tibialis Raise,Prevenzione,Piede e caviglia,tibiale anteriore,equilibrio anteriore della gamba,corpo libero,0,1,3,3,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Seated Calf Raise / Bent-knee Calf Raise
+Toe Raises,Prevenzione,Piede e caviglia,tibiale,controllo della caviglia,corpo libero,0,0,2,2,15,45,prn,BU,1,1,"libera, anche nei giorni facili",15,10,Toe Yoga / Farmer Walk sulle punte
+Farmer Walk sulle punte,Prevenzione,Piede e caviglia,polpacci/piede,forza del piede sotto carico,manubri,0,1,2,3,20,60,int,BU,1,1,"libera, anche nei giorni facili",20,14,Seated Calf Raise / Bent-knee Calf Raise
+Short Foot Exercise,Prevenzione,Bilaterale,arco plantare,sostegno dell'arco,corpo libero,0,0,2,2,10,30,prn,BUSP,1,1,"libera, anche nei giorni facili",10,7,Banded Hip Extension
+Toe Yoga,Prevenzione,Piede e caviglia,intrinseci del piede,controllo delle dita,corpo libero,0,0,2,2,10,30,prn,BU,1,1,"libera, anche nei giorni facili",10,7,Toe Raises / Farmer Walk sulle punte
+Eccentric Heel Drops,Prevenzione,Piede e caviglia,polpaccio/Achille,tolleranza del tendine,gradino,0,1,3,3,12,60,prn,BUSP,1,3,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Seated Calf Raise / Bent-knee Calf Raise
+Lateral Band Walk,Prevenzione,Stabilita anca,gluteo medio,stabilita' laterale del bacino,elastico,0,2,3,2,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Monster Walk / Copenhagen Plank
+Monster Walk,Prevenzione,Stabilita anca,gluteo medio,attivazione dell'anca,elastico,0,2,3,2,12,45,prn,BUSP,1,1,"libera, anche nei giorni facili",12,8,Lateral Band Walk / Copenhagen Plank
+Hip Airplane,Prevenzione,Rotazione,gluteo/controllo anca,controllo rotazionale dell'anca,corpo libero,0,1,3,2,8,45,avz,BUS,1,1,"libera, anche nei giorni facili",8,5,-
+Copenhagen Plank,Prevenzione,Stabilita anca,adduttori,robustezza degli adduttori,panca,0,2,3,2,25,45,avz,BUSP,1,1,"libera, anche nei giorni facili",25,17,Lateral Band Walk / Monster Walk
+Single-leg Glute Bridge,Forza funzionale,Single leg,gluteo,estensione monopodalica,corpo libero,0,2,3,3,12,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12-14,10-11,Split Squat / Single-leg RDL
+Single-leg Hip Thrust,Forza funzionale,Single leg,gluteo,estensione con stabilizzazione,panca,0,3,3,3,10,90,int,BUS,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Bulgarian Split Squat / Single-leg Leg Press
+Cable Hip Abduction,Prevenzione,Stabilita anca,abduttori,controllo frontale del bacino,cavi,0,1,2,3,12,60,prn,BU,1,1,"libera, anche nei giorni facili",12,8,Cable Hip Adduction / Lateral Band Walk
+Cable Hip Adduction,Prevenzione,Stabilita anca,adduttori,equilibrio adduttori-abduttori,cavi,0,1,2,3,12,60,prn,BU,1,1,"libera, anche nei giorni facili",12,8,Cable Hip Abduction / Lateral Band Walk
+Side Plank + Leg Raise,Core e stabilita',Stabilita anca,gluteo medio/core,stabilita' laterale sotto carico,corpo libero,2,3,3,3,10,45,int,BUSP,2,2,"libera, anche nei giorni facili",10,7,Side Plank / Lateral Band Walk
+Pogo Jumps,Pliometria,Piede e caviglia,piede/caviglia/soleo,stiffness e ritorno elastico,corpo libero,0,1,3,3,20,60,prn,BUSP,2,2,"libera, anche nei giorni facili",20,14,Ankle Hops / Low Pogo
+Ankle Hops,Pliometria,Piede e caviglia,caviglia,reattivita' della caviglia,corpo libero,0,1,3,3,20,60,prn,BUS,2,2,"libera, anche nei giorni facili",20,14,Pogo Jumps / Low Pogo
+Squat Jump,Pliometria,Pliometria,quadricipiti/glutei,potenza concentrica,corpo libero,0,2,3,4,5,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",5,3,Countermovement Jump / Box Jump
+Countermovement Jump,Pliometria,Pliometria,quadricipiti/glutei,ciclo allungamento-accorciamento,corpo libero,0,2,3,4,5,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",5,3,Squat Jump / Box Jump
+Box Jump,Pliometria,Pliometria,quadricipiti/glutei,potenza verticale,box,0,2,3,4,4,120,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",4,2,Squat Jump / Countermovement Jump
+Depth Jump,Pliometria,Pliometria,catena inferiore,stiffness reattiva,box,0,1,3,3,4,150,avz,US,5,5,almeno 48 h prima del lungo,4,2,Drop Jump / Bounds
+Drop Jump,Pliometria,Pliometria,catena inferiore,tempo di contatto breve,box,0,1,3,3,5,150,avz,US,5,5,almeno 48 h prima del lungo,5,3,Depth Jump / Bounds
+Broad Jump,Pliometria,Pliometria,glutei/femorali,potenza orizzontale,corpo libero,0,2,3,3,4,120,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",4,2,Squat Jump / Countermovement Jump
+Bounds,Pliometria,Pliometria,glutei/femorali,propulsione orizzontale,corpo libero,0,1,3,3,6,120,int,US,5,5,almeno 48 h prima del lungo,6,4,Depth Jump / Drop Jump
+Alternate Bounds,Pliometria,Pliometria,glutei/femorali,alternanza propulsiva,corpo libero,0,1,3,3,8,120,int,US,5,5,almeno 48 h prima del lungo,8,5,Depth Jump / Drop Jump
+Single-leg Bounds,Pliometria,Single leg,glutei/polpaccio,propulsione monopodalica,corpo libero,0,1,3,3,5,120,avz,US,5,5,almeno 48 h prima del lungo,5,3,Single-leg Broad Jump / Single-leg Hop
+Single-leg Pogo,Pliometria,Single leg,piede/caviglia,stiffness monopodalica,corpo libero,0,1,3,2,10,60,int,BUSP,2,2,"libera, anche nei giorni facili",10,7,Single-leg Calf Raise / Single-leg Balance
+Single-leg Hop,Pliometria,Single leg,catena inferiore,potenza monopodalica,corpo libero,0,1,3,3,6,90,int,US,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Single-leg Pogo / Single-leg Calf Raise
+Hop and Stick,Pliometria,Pliometria,catena inferiore,controllo dell'atterraggio,corpo libero,0,1,3,3,5,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",5,3,Triple Hop / Reactive Box Jump
+Lateral Hop,Pliometria,Piede e caviglia,gluteo medio/caviglia,stabilita' frontale,corpo libero,0,1,3,3,8,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Pogo Jumps / Ankle Hops
+Skater Jump,Pliometria,Stabilita anca,glutei/gluteo medio,potenza laterale,corpo libero,0,1,3,3,8,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Step-down / Curtsy Lunge
+Triple Hop,Pliometria,Pliometria,catena inferiore,potenza ripetuta,corpo libero,0,1,3,3,3,120,avz,US,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",3,2,Hop and Stick / Reactive Box Jump
+A-Skip,Pliometria,Pliometria,coordinazione corsa,meccanica di corsa,corpo libero,0,0,3,3,20,45,prn,BUSP,2,2,"libera, anche nei giorni facili",20,14,B-Skip
+B-Skip,Pliometria,Pliometria,coordinazione corsa,estensione attiva,corpo libero,0,0,3,3,20,45,int,BUSP,2,2,"libera, anche nei giorni facili",20,14,A-Skip
+High Knees reattivi,Pliometria,Piede e caviglia,flessori anca/caviglia,frequenza e reattivita',corpo libero,0,0,3,3,20,45,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",20,14,Quick Contacts / Ankling
+Ankling,Pliometria,Piede e caviglia,caviglia/piede,contatto al suolo,corpo libero,0,0,3,3,20,45,prn,BUSP,2,2,"libera, anche nei giorni facili",20,14,Pogo Jumps / Ankle Hops
+Quick Feet,Pliometria,Piede e caviglia,caviglia,frequenza di appoggio,corpo libero,0,0,2,3,15,45,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,Fast Feet Ladder / Toe Raises
+Fast Feet Ladder,Pliometria,Piede e caviglia,caviglia/coordinazione,coordinazione rapida,scaletta,0,0,2,3,15,45,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,Quick Feet / Toe Raises
+Split Jump,Pliometria,Single leg,quadricipiti/glutei,potenza alternata,corpo libero,0,2,3,3,6,90,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Split Squat / Single-leg RDL
+Lateral Bounds,Pliometria,Stabilita anca,gluteo medio,potenza laterale,corpo libero,0,2,2,3,6,90,int,BUS,5,5,almeno 48 h prima del lungo,6,4,Lateral Lunge / Cossack Squat
+Medicine Ball Throw,Pliometria,Pliometria,tronco/spalla,potenza del tronco,palla medica,2,2,1,3,6,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Scoop Throw / Reverse Scoop Throw
+Kettlebell Swing,Pliometria,Pliometria,glutei/femorali,estensione esplosiva dell'anca,kettlebell,1,3,2,4,12,90,int,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Squat Jump / Countermovement Jump
+Plank,Core e stabilita',Anti-movimento,core anteriore,anti-estensione,corpo libero,3,3,3,3,45,45,prn,BUSP,2,2,"libera, anche nei giorni facili",45,31,Long Lever Plank / Pallof Press
+Long Lever Plank,Core e stabilita',Anti-movimento,core anteriore,anti-estensione avanzata,corpo libero,3,3,3,3,30,60,avz,BUS,2,2,"libera, anche nei giorni facili",30,21,Plank / Pallof Press
+Side Plank,Core e stabilita',Stabilita anca,obliqui/gluteo medio,stabilita' laterale,corpo libero,3,3,3,3,40,45,prn,BUSP,2,2,"libera, anche nei giorni facili",40,28,Side Plank + Leg Raise / Lateral Band Walk
+Dead Bug,Core e stabilita',Bilaterale,core profondo,controllo lombo-pelvico,corpo libero,3,3,3,3,8,45,prn,BUSP,2,2,"libera, anche nei giorni facili",8,5,Bird Dog / Farmer Carry
+Bird Dog,Core e stabilita',Bilaterale,core/estensori,coordinazione crociata,corpo libero,2,3,3,3,8,45,prn,BUSP,2,2,"libera, anche nei giorni facili",8,5,Farmer Carry / Front Rack Carry
+Pallof Press,Core e stabilita',Anti-movimento,obliqui/core,anti-rotazione,cavi/elastico,3,3,3,3,10,60,prn,BUSP,2,2,"libera, anche nei giorni facili",10,7,Plank / Long Lever Plank
+Cable Anti-Rotation,Core e stabilita',Rotazione,obliqui,controllo della rotazione,cavi,3,3,2,3,10,60,prn,BUS,2,2,"libera, anche nei giorni facili",10,7,Cable Chop / Cable Lift
+Suitcase Carry,Core e stabilita',Anti-movimento,core laterale,anti-inclinazione sotto carico,manubri,2,3,3,3,30,60,prn,BUS,2,2,"libera, anche nei giorni facili",30,21,Offset Farmer Carry / Plank
+Farmer Carry,Core e stabilita',Bilaterale,core/presa,rigidita' del tronco sotto carico,manubri,2,3,3,3,40,60,prn,BUS,2,2,"libera, anche nei giorni facili",40,28,Bird Dog / Front Rack Carry
+Bear Crawl,Core e stabilita',Bilaterale,core/spalle,stabilita' in movimento,corpo libero,2,2,2,3,20,45,prn,BU,2,2,"libera, anche nei giorni facili",20,14,Superman alternato / Mountain Climber lento
+Hollow Hold,Core e stabilita',Bilaterale,core anteriore,tensione globale,corpo libero,3,2,2,3,30,45,int,BUSP,2,2,"libera, anche nei giorni facili",30,21,Bear Crawl / Superman alternato
+Stir the Pot,Core e stabilita',Anti-movimento,core profondo,anti-estensione dinamica,fitball,3,3,2,3,10,60,avz,BUS,2,2,"libera, anche nei giorni facili",10,7,Stability Ball Rollout / Ab Wheel
+Stability Ball Rollout,Core e stabilita',Anti-movimento,core anteriore,anti-estensione,fitball,3,3,2,3,10,60,int,BUS,2,2,"libera, anche nei giorni facili",10,7,Stir the Pot / Ab Wheel
+Ab Wheel,Core e stabilita',Anti-movimento,core anteriore,anti-estensione massimale,ruota,3,3,2,3,8,60,avz,BU,2,2,"libera, anche nei giorni facili",8,5,Stir the Pot / Stability Ball Rollout
+Cable Chop,Core e stabilita',Rotazione,obliqui,rotazione controllata,cavi,3,2,2,3,10,60,int,BUS,2,2,"libera, anche nei giorni facili",10,7,Cable Lift / Half-kneeling Cable Rotation
+Cable Lift,Core e stabilita',Rotazione,obliqui,rotazione ascendente,cavi,3,2,2,3,10,60,int,BUS,2,2,"libera, anche nei giorni facili",10,7,Cable Chop / Half-kneeling Cable Rotation
+Body Saw,Core e stabilita',Anti-movimento,core anteriore,anti-estensione dinamica,corpo libero,3,2,2,3,10,45,int,BUS,2,2,"libera, anche nei giorni facili",10,7,Plank Shoulder Tap / Stir the Pot
+Superman alternato,Core e stabilita',Bilaterale,estensori,catena posteriore,corpo libero,2,2,2,3,10,45,prn,BU,2,2,"libera, anche nei giorni facili",10,7,Bear Crawl / Mountain Climber lento
+Pull-up,Forza massima,Trazione,dorsali/bicipiti,trazione verticale,sbarra,3,0,0,4,6,150,avz,BUSP,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",6-8,4-5,Chin-up / Lat Pulldown
+Chin-up,Forza massima,Trazione,dorsali/bicipiti,trazione supina,sbarra,3,0,0,4,6,150,int,BU,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",6-8,4-5,Pull-up / Lat Pulldown
+Lat Pulldown,Forza massima,Trazione,dorsali,trazione verticale assistita,macchina,3,0,0,4,8,120,prn,BUSP,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Pull-up / Chin-up
+Straight-arm Pulldown,Forza funzionale,Trazione,dorsale/gran rotondo,"estensione di spalla, passata",cavi,3,0,0,3,10,90,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Dumbbell Pullover / Neutral Grip Pull-up
+Cable Pullover,Forza funzionale,Bilaterale,dorsali,estensione di spalla,cavi,3,0,0,3,10,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Overhead Triceps Extension / Diamond Push-up
+Dumbbell Pullover,Forza funzionale,Trazione,dorsali,apertura e trazione,manubri,3,0,0,3,10,90,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Straight-arm Pulldown / Neutral Grip Pull-up
+Seated Cable Row,Forza massima,Spalla e scapola,dorsali/romboidi,trazione orizzontale,cavi,3,1,1,4,10,90,prn,BUS,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Chest Supported Row / Overhead Carry
+Chest Supported Row,Forza massima,Spalla e scapola,dorsali/scapole,trazione senza carico lombare,macchina,3,1,1,4,10,90,prn,BUS,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Seated Cable Row / Overhead Carry
+One-arm Cable Row,Forza funzionale,Single leg,dorsali/core,trazione unilaterale,cavi,3,1,1,3,8,90,prn,BUSP,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,One-arm Dumbbell Row / One-arm Cable Pulldown
+One-arm Dumbbell Row,Forza funzionale,Single leg,dorsali,trazione unilaterale,manubri,3,1,1,3,10,90,prn,BUS,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,One-arm Cable Row / One-arm Cable Pulldown
+TRX Row,Forza funzionale,Trazione,dorsali/core,trazione a corpo libero,TRX,3,1,1,3,12,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12-14,10-11,Medicine Ball Slam / Australian Row
+Cable Triceps Pushdown,Forza funzionale,Spinta,tricipite,fase di spinta subacquea,cavi,3,0,0,3,10,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Close Grip Push-up / Dips
+Rope Pushdown,Forza funzionale,Rotazione,tricipite,spinta con rotazione,cavi,3,0,0,3,12,60,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12-14,10-11,Rotational Throw / Half-kneeling Rotational Throw
+Overhead Triceps Extension,Forza funzionale,Bilaterale,tricipite,estensione in allungamento,manubri,3,0,0,3,10,60,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Cable Pullover / Diamond Push-up
+Close Grip Push-up,Bodyweight,Spinta,tricipite/petto,spinta a corpo libero,corpo libero,2,0,0,3,12,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Dips / Pike Push-up
+Dips,Forza funzionale,Spinta,tricipite/petto,spinta verticale,parallele,2,0,0,3,8,90,avz,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,Close Grip Push-up / Pike Push-up
+Face Pull,Prevenzione,Spalla e scapola,trapezio medio/cuffia,salute della spalla,cavi/elastico,3,1,1,3,12,60,prn,BUSP,1,1,"libera, anche nei giorni facili",12,8,Band Pull Apart / Y Raise
+Band Pull Apart,Prevenzione,Spalla e scapola,romboidi/trapezio,retrazione scapolare,elastico,3,1,1,3,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Face Pull / Y Raise
+Y Raise,Prevenzione,Spalla e scapola,trapezio inferiore,elevazione scapolare,manubri,3,0,0,2,10,45,prn,BUSP,1,1,"libera, anche nei giorni facili",10,7,T Raise / W Raise
+T Raise,Prevenzione,Spalla e scapola,trapezio medio,retrazione,manubri,3,0,0,2,10,45,prn,BUSP,1,1,"libera, anche nei giorni facili",10,7,Y Raise / W Raise
+W Raise,Prevenzione,Spalla e scapola,cuffia/trapezio,rotazione esterna scapolare,manubri,3,0,0,2,10,45,prn,BUSP,1,1,"libera, anche nei giorni facili",10,7,Y Raise / T Raise
+Prone Y-T-W,Prevenzione,Spalla e scapola,scapole/cuffia,complesso scapolare,corpo libero,3,0,0,2,8,45,prn,BUSP,1,1,"libera, anche nei giorni facili",8,5,Y Raise / T Raise
+Scapular Pull-up,Prevenzione,Spalla e scapola,scapole,controllo scapolare in trazione,sbarra,3,0,0,3,8,60,int,BUSP,1,1,"libera, anche nei giorni facili",8,5,Y Raise / T Raise
+Scapular Push-up,Prevenzione,Spalla e scapola,dentato anteriore,protrazione scapolare,corpo libero,3,0,0,3,12,45,prn,BUSP,1,1,"libera, anche nei giorni facili",12,8,Y Raise / T Raise
+Serratus Wall Slide,Prevenzione,Spalla e scapola,dentato anteriore,ritmo scapolo-omerale,muro,3,0,0,2,12,45,prn,BUSP,1,1,"libera, anche nei giorni facili",12,8,Y Raise / T Raise
+Wall Angels,Prevenzione,Spalla e scapola,scapole/mobilita',mobilita' toracica,muro,3,0,0,2,10,45,prn,BUSP,1,1,"libera, anche nei giorni facili",10,7,Y Raise / T Raise
+Cable External Rotation,Prevenzione,Spalla e scapola,cuffia dei rotatori,rotazione esterna,cavi,3,0,0,3,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Y Raise / T Raise
+Band External Rotation,Prevenzione,Spalla e scapola,cuffia dei rotatori,rotazione esterna,elastico,3,0,0,3,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Y Raise / T Raise
+Side-lying External Rotation,Prevenzione,Spalla e scapola,cuffia dei rotatori,isolamento della cuffia,manubri,3,0,0,2,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Y Raise / T Raise
+90/90 External Rotation,Prevenzione,Spalla e scapola,cuffia dei rotatori,rotazione in posizione di nuoto,elastico,3,0,0,2,12,45,int,BUSP,1,1,"libera, anche nei giorni facili",12,8,Y Raise / T Raise
+Cuban Rotation,Prevenzione,Spalla e scapola,cuffia/scapole,rotazione completa,manubri,3,0,0,2,10,45,avz,BU,1,1,"libera, anche nei giorni facili",10,7,Y Raise / T Raise
+Medicine Ball Slam,Pliometria,Trazione,dorsale/core,potenza di trazione,palla medica,3,1,1,4,6,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,TRX Row / Australian Row
+Overhead Slam,Pliometria,Pliometria,catena superiore,potenza verticale,palla medica,3,1,1,3,8,90,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Scoop Throw / Reverse Scoop Throw
+Rotational Throw,Pliometria,Rotazione,core/rotazione,potenza rotazionale,palla medica,3,2,1,3,6,90,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Half-kneeling Rotational Throw / Rotational Wall Throw
+Shot-put Throw,Pliometria,Spinta,tronco/spalla,potenza di spinta,palla medica,3,1,1,3,6,90,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Chest Pass / Push-up
+Half-kneeling Rotational Throw,Pliometria,Rotazione,core/rotazione,rotazione controllata,palla medica,3,2,1,3,6,90,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Rotational Throw / Rotational Wall Throw
+Chest Pass,Pliometria,Spinta,pettorali/tricipiti,potenza di spinta,palla medica,2,1,1,3,8,60,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Push-up / Incline Push-up
+Air Squat,Bodyweight,Bilaterale,quadricipiti/glutei,schema di base,corpo libero,0,2,2,3,15,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,Tempo Squat / Pause Squat
+Tempo Squat,Bodyweight,Bilaterale,quadricipiti/glutei,controllo del tempo,corpo libero,0,2,2,3,10,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10,7,Air Squat / Pause Squat
+Pause Squat,Bodyweight,Bilaterale,quadricipiti,forza in posizione,corpo libero,0,2,2,3,8,60,int,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Air Squat / Tempo Squat
+Lateral Lunge,Bodyweight,Stabilita anca,adduttori/glutei,piano frontale,corpo libero,0,2,2,3,10,60,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10,7,Cossack Squat / Curtsy Lunge
+Curtsy Lunge,Bodyweight,Stabilita anca,gluteo medio,piano trasverso,corpo libero,0,1,2,3,10,60,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10,7,Skater / Cable Hip Abduction
+Single-leg Squat,Bodyweight,Single leg,quadricipiti/glutei,forza monopodalica,corpo libero,0,2,3,3,8,90,avz,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Split Squat / Single-leg RDL
+Pistol Squat assistito,Bodyweight,Single leg,quadricipiti/glutei,monopodalico completo,TRX,0,2,2,3,6,90,avz,BU,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Split Squat / Single-leg RDL
+Glute Bridge,Bodyweight,Bilaterale,glutei,estensione dell'anca,corpo libero,0,2,2,3,15,45,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,Air Squat / Tempo Squat
+Nordic Curl assistito,Bodyweight,Bilaterale,femorali,forza eccentrica dei femorali,partner/panca,0,2,3,3,6,90,avz,BU,3,5,almeno 48 h prima del lungo,6,4,Reverse Lunge / Walking Lunge
+Push-up,Bodyweight,Spinta,petto/tricipiti,spinta orizzontale,corpo libero,2,1,1,3,15,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,Chest Pass / Incline Push-up
+Incline Push-up,Bodyweight,Spinta,petto/tricipiti,spinta facilitata,panca,2,1,1,3,15,45,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,Chest Pass / Push-up
+Decline Push-up,Bodyweight,Spinta,petto/spalle,spinta con carico maggiore,panca,2,1,1,3,12,60,int,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Chest Pass / Push-up
+Diamond Push-up,Bodyweight,Bilaterale,tricipiti,enfasi tricipite,corpo libero,3,0,0,3,10,60,int,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10,7,Cable Pullover / Overhead Triceps Extension
+Pike Push-up,Bodyweight,Spinta,spalle,spinta verticale,corpo libero,2,0,0,3,10,60,int,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10,7,Close Grip Push-up / Dips
+Australian Row,Bodyweight,Trazione,dorsali,trazione orizzontale,sbarra bassa,3,1,1,3,12,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,TRX Row / Medicine Ball Slam
+Mountain Climber lento,Core e stabilita',Bilaterale,core/spalle,stabilita' in movimento,corpo libero,2,2,2,3,20,45,prn,BU,2,2,"libera, anche nei giorni facili",20,14,Bear Crawl / Superman alternato
+Crab Walk,Core e stabilita',Bilaterale,catena posteriore,mobilita' e stabilita',corpo libero,1,1,1,3,20,45,prn,B,2,2,"libera, anche nei giorni facili",20,14,Bear Crawl / Superman alternato
+Plank Shoulder Tap,Core e stabilita',Anti-movimento,core/spalle,anti-rotazione dinamica,corpo libero,3,2,2,3,20,45,prn,BUSP,2,2,"libera, anche nei giorni facili",20,14,Body Saw / Stir the Pot
+Plank Walkout,Core e stabilita',Bilaterale,core/spalle,controllo in allungamento,corpo libero,2,2,2,3,8,45,prn,BU,2,2,"libera, anche nei giorni facili",8,5,Bear Crawl / Superman alternato
+Reverse Plank,Core e stabilita',Bilaterale,catena posteriore,estensione del tronco,corpo libero,2,2,2,3,30,45,prn,BU,2,2,"libera, anche nei giorni facili",30,21,Bear Crawl / Superman alternato
+Burpee,Bodyweight,Bilaterale,generale,conditioning generale,corpo libero,1,1,1,3,12,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Jumping Jack / Squat Thrust
+Jumping Jack,Bodyweight,Bilaterale,generale,riscaldamento e conditioning,corpo libero,1,1,1,3,30,45,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",30,21,Burpee / Squat Thrust
+Squat Thrust,Bodyweight,Bilaterale,generale,conditioning,corpo libero,1,1,1,3,12,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Burpee / Jumping Jack
+Jump Rope,Bodyweight,Piede e caviglia,caviglia/polpaccio,reattivita' e conditioning,corda,0,1,2,3,60,60,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",60,42,Line Hop / Farmer Walk sulle punte
+Single-leg Balance,Prevenzione,Single leg,propriocezione,controllo monopodalico,corpo libero,0,1,3,2,30,30,prn,BUSP,1,1,"libera, anche nei giorni facili",30,21,Single-leg Calf Raise
+Belt Squat,Forza massima,Bilaterale,quadricipiti/glutei,forza con minor carico lombare,macchina,0,3,2,4,6,150,int,BU,4,3,"nei giorni gia impegnativi, mai in vigilia del lungo",6-8,4-5,Leg Press / Hack Squat
+Reverse Sled Drag,Forza funzionale,Spinta,quadricipiti,forza-resistenza in spinta,slitta,0,3,2,4,25,90,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",25,17,Lunge + Knee Drive / Standing Calf Raise
+Sled Push,Forza funzionale,Bilaterale,quadricipiti/glutei,forza orizzontale,slitta,0,2,2,4,20,90,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",20,14,Air Squat / Tempo Squat
+Cable Pull Through,Forza funzionale,Bilaterale,glutei/femorali,schema di hip hinge,cavi,0,2,2,3,12,75,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12-14,10-11,Air Squat / Tempo Squat
+Wall Sit,Forza funzionale,Bilaterale,quadricipiti,resistenza locale isometrica,corpo libero,0,2,1,3,45,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",45,31,Air Squat / Tempo Squat
+Nordic Hamstring,Forza funzionale,Bilaterale,femorali,forza eccentrica dei femorali,partner/panca,0,2,3,3,6,120,avz,BU,3,5,almeno 48 h prima del lungo,6-8,4-5,Reverse Lunge / Walking Lunge
+Clamshell,Prevenzione,Stabilita anca,gluteo medio,attivazione dell'anca,elastico,0,2,3,2,15,40,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Lateral Band Walk / Monster Walk
+Banded Hip Extension,Prevenzione,Bilaterale,glutei,estensione dell'anca,elastico,0,2,2,3,15,45,prn,BUSP,1,1,"libera, anche nei giorni facili",15,10,Short Foot Exercise
+One-arm Cable Pulldown,Forza funzionale,Single leg,dorsale,trazione verticale unilaterale,cavi,3,0,0,3,8,90,int,BUSP,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8-10,6-7,One-arm Cable Row / One-arm Dumbbell Row
+Cable Press,Forza funzionale,Spinta,pettorali/tricipiti,spinta orizzontale al cavo,cavi,2,0,0,3,10,75,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10-12,8-9,Close Grip Push-up / Dips
+Half-kneeling Pallof,Core e stabilita',Anti-movimento,obliqui/core,anti-rotazione in appoggio instabile,cavi,3,3,3,3,10,60,prn,BUSP,2,2,"libera, anche nei giorni facili",10,7,Plank / Long Lever Plank
+Cable Anti-Rotation Hold,Core e stabilita',Anti-movimento,obliqui,anti-rotazione isometrica,cavi,3,3,3,3,25,60,prn,BUSP,2,2,"libera, anche nei giorni facili",25,17,Plank / Long Lever Plank
+Bear Plank Shoulder Tap,Core e stabilita',Anti-movimento,core/spalle,anti-rotazione in quadrupedia,corpo libero,3,2,3,3,16,45,int,BUSP,2,2,"libera, anche nei giorni facili",16,11,Plank / Long Lever Plank
+Offset Farmer Carry,Core e stabilita',Anti-movimento,core laterale,anti-inclinazione asimmetrica,manubri,2,3,3,3,30,60,int,BUS,2,2,"libera, anche nei giorni facili",30,21,Suitcase Carry / Plank
+Front Rack Carry,Core e stabilita',Bilaterale,core/tronco,rigidita' del tronco in posizione alta,bilanciere,2,3,3,3,25,75,int,BU,2,2,"libera, anche nei giorni facili",25,17,Bird Dog / Farmer Carry
+Overhead Carry,Core e stabilita',Spalla e scapola,spalla/scapole,stabilita' sopra la testa,manubri,3,1,1,3,20,75,avz,BU,2,2,"libera, anche nei giorni facili",20,14,Face Pull / Band Pull Apart
+Half-kneeling Cable Rotation,Core e stabilita',Rotazione,obliqui,rotazione controllata,cavi,3,2,2,3,10,60,int,BUS,2,2,"libera, anche nei giorni facili",10,7,Cable Chop / Cable Lift
+Low Pogo,Pliometria,Piede e caviglia,piede/caviglia,stiffness a basso impatto,corpo libero,0,1,3,3,20,45,prn,BUSP,2,2,"libera, anche nei giorni facili",20,14,Pogo Jumps / Ankle Hops
+Line Hop,Pliometria,Piede e caviglia,caviglia,contatti rapidi,corpo libero,0,1,2,3,20,45,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",20,14,Jump Rope / Farmer Walk sulle punte
+Reactive Hurdle Jump,Pliometria,Pliometria,catena inferiore,reattivita' su ostacoli,ostacoli,0,1,3,3,6,120,avz,US,5,5,almeno 48 h prima del lungo,6,4,Depth Jump / Drop Jump
+Repeated Pogo,Pliometria,Piede e caviglia,piede/caviglia/soleo,stiffness ripetuta,corpo libero,0,1,3,3,25,60,int,BUS,2,2,"libera, anche nei giorni facili",25,17,Pogo Jumps / Ankle Hops
+Reactive Box Jump,Pliometria,Pliometria,catena inferiore,potenza reattiva,box,0,1,3,3,5,120,avz,US,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",5,3,Hop and Stick / Triple Hop
+Single-leg Broad Jump,Pliometria,Single leg,glutei/femorali,potenza orizzontale monopodalica,corpo libero,0,1,3,3,4,120,avz,US,5,5,almeno 48 h prima del lungo,4,2,Single-leg Bounds / Single-leg Hop
+Straight-leg Bounds,Pliometria,Piede e caviglia,polpaccio/femorali,propulsione a ginocchio esteso,corpo libero,0,0,3,3,20,90,avz,US,5,5,almeno 48 h prima del lungo,20,14,High Knees reattivi / Quick Contacts
+Quick Contacts,Pliometria,Piede e caviglia,caviglia,tempo di contatto minimo,corpo libero,0,0,3,3,15,60,int,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",15,10,High Knees reattivi / Ankling
+Rotational Wall Throw,Pliometria,Rotazione,core/rotazione,potenza rotazionale al muro,palla medica,3,2,1,4,6,75,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Rotational Throw / Half-kneeling Rotational Throw
+Scoop Throw,Pliometria,Pliometria,catena posteriore/core,potenza di lancio dal basso,palla medica,3,2,1,3,6,75,prn,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Reverse Scoop Throw / Medicine Ball Throw
+Reverse Scoop Throw,Pliometria,Pliometria,catena posteriore,estensione esplosiva,palla medica,3,2,1,3,6,75,int,BUS,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Scoop Throw / Medicine Ball Throw
+Cossack Squat,Bodyweight,Stabilita anca,adduttori/glutei,mobilita' e forza sul piano frontale,corpo libero,0,2,2,3,8,60,int,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Lateral Lunge / Curtsy Lunge
+Forward Lunge,Bodyweight,Bilaterale,quadricipiti/glutei,schema di affondo,corpo libero,0,2,2,3,10,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",10,7,Air Squat / Tempo Squat
+Hamstring Walkout,Bodyweight,Bilaterale,femorali,controllo eccentrico dei femorali,corpo libero,0,1,3,3,8,60,prn,BU,3,3,"nei giorni gia impegnativi, mai in vigilia del lungo",8,5,Reverse Lunge / Walking Lunge
+Wide Push-up,Bodyweight,Spinta,petto/spalle,variante di spinta,corpo libero,2,0,0,3,12,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Close Grip Push-up / Dips
+Neutral Grip Pull-up,Bodyweight,Trazione,dorsali,trazione a presa neutra,sbarra,3,0,0,3,6,120,int,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",6,4,Straight-arm Pulldown / Dumbbell Pullover
+Inverted Row,Bodyweight,Trazione,dorsali,trazione orizzontale,sbarra bassa,3,1,1,3,12,60,prn,BUSP,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,TRX Row / Medicine Ball Slam
+Bench Dip,Bodyweight,Spinta,tricipiti,spinta assistita,panca,2,0,0,3,12,60,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Close Grip Push-up / Dips
+Walking Plank,Core e stabilita',Anti-movimento,core/spalle,anti-rotazione in transizione,corpo libero,2,2,2,3,12,45,prn,BU,2,2,"libera, anche nei giorni facili",12,8,Body Saw / Plank Shoulder Tap
+Plank Jack,Bodyweight,Bilaterale,core/conditioning,core sotto frequenza,corpo libero,1,1,1,3,20,45,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",20,14,Burpee / Jumping Jack
+Lunge + Knee Drive,Bodyweight,Spinta,glutei/flessori anca,affondo con spinta,corpo libero,0,2,3,3,12,60,prn,BU,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",12,8,Standing Calf Raise / Reverse Sled Drag
+High Knees,Bodyweight,Bilaterale,flessori anca,conditioning e frequenza,corpo libero,0,1,2,3,30,45,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",30,21,Air Squat / Tempo Squat
+Skater,Bodyweight,Stabilita anca,gluteo medio,conditioning laterale,corpo libero,0,1,2,3,20,45,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",20,14,Curtsy Lunge / Cable Hip Abduction
+Mountain Climber,Bodyweight,Bilaterale,core/conditioning,conditioning generale,corpo libero,1,1,1,3,30,45,prn,B,3,2,"nei giorni gia impegnativi, mai in vigilia del lungo",30,21,Burpee / Jumping Jack
