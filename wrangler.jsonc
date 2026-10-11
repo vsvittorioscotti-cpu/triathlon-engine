@@ -1,0 +1,10 @@
+{
+  // Cloudflare Workers con asset statici: pubblica la cartella site/ così com'è.
+  // Il progetto Cloudflare esegue `npx wrangler deploy` e legge questo file.
+  "name": "triathlon-engine",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./site",
+    "not_found_handling": "404-page"
+  }
+}
