@@ -1,0 +1,354 @@
+<script src="engine.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   IRONMAN 226 — il piano generato dal motore (engine.js, porting TS di
+   scala_gen.py + generatore.py). Le regole stanno nel Manuale del piano di
+   allenamento, scheda "La dottrina"; qui c'è solo l'interfaccia.
+   Setup → Scala → Calendario → Diario → Zone → Test → Recupero → Forma → Dashboard
+   ===================================================================== */
+const E = window.TriathlonEngine;
+const SUPABASE_PROJECT = "yzuyikzrtobjuijngjmc";   // progetto "Triathlon Engine" (eu-central-1)
+const SUPABASE_SERVER = "Supabase";                  // nome del connettore in claude.ai
+
+const DAYS = ["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato","Domenica"];
+const DAYS_S = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+const MONTHS = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+const DISC = ["Nuoto","Bici","Corsa","Forza","Bodyweight","Brick","Altro","Riposo"];
+const DKEY = {Nuoto:"n",Bici:"b",Corsa:"c",Forza:"f",Altro:"a"};
+/* disciplina del motore -> disciplina dell'interfaccia e del diario */
+const DISC_UI = {"Nuoto":"Nuoto","Ciclismo":"Bici","Corsa a piedi":"Corsa","Forza":"Forza"};
+const TIPI = ["Recupero attivo","Aerobico base","Aerobico lento (lungo)","Ritmo gara specifico","Soglia anaerobica",
+  "VO2max","Preparazione atletica","Brick","Tecnica","Acque libere","Camminata","Tennis / sport vario","Test","Gara","Altro"];
+const FEEL = ["Ottima","Buona","Normale","Scarsa","Pessima"];
+const GRADINI = ["Triathlon Sprint","Triathlon Olimpico","Half-Ironman","Ironman"];
+const FASI_LABEL = ["Preparation","Base 1","Base 2","Build 1","Build 2","Specific","Peak","Taper"];
+const DOM_LABEL = {LOW:"basso", MOD:"medio", HIGH:"alto"};
+
+/* ===================== date utilities ===================== */
+const DAY_MS = 86400000;
+const iso = d => d.toISOString().slice(0,10);
+const parseISO = s => { const [y,m,d] = s.split("-").map(Number); return new Date(Date.UTC(y,m-1,d)); };
+const addDays = (s,n) => iso(new Date(parseISO(s).getTime()+n*DAY_MS));
+const diffDays = (a,b) => Math.round((parseISO(b)-parseISO(a))/DAY_MS);
+const todayISO = () => { const t = new Date(); return iso(new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate()))); };
+/* lunedì della settimana che contiene la data */
+const mondayOf = s => addDays(s, -((parseISO(s).getUTCDay()+6)%7));
+function fmtD(s,long){ const d = parseISO(s);
+  return d.getUTCDate()+" "+MONTHS[d.getUTCMonth()]+(long?" "+d.getUTCFullYear():""); }
+function fmtFull(s){ const d = parseISO(s);
+  return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear(); }
+const mmss = sec => { if(!(sec>0)) return "—"; const m = Math.floor(sec/60), s = Math.round(sec%60);
+  return m+":"+String(s).padStart(2,"0"); };
+const hm = min => { const h = Math.floor(min/60), m = Math.round(min%60);
+  return h ? h+"h "+String(m).padStart(2,"0")+"'" : m+"'"; };
+const n1 = v => (Math.round(v*10)/10).toFixed(1);
+const n2 = v => (Math.round(v*100)/100).toFixed(2);
+const pct = v => isFinite(v) ? Math.round(v*100)+"%" : "—";
+const nf = v => Math.round(v).toLocaleString("it-IT");
+const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+
+/* ===================== state ===================== */
+const SETUP0 = {
+  atleta:"Vittorio", raceDate:"2027-04-11",
+  gradinoFatto:"", obiettivo:"Ironman", oreDisponibili:11, tettoRigido:false, oreOggi:5,
+  ctl0:30, ftp:220, lthrBike:160, thrPace:285, lthrRun:168, css:100, hrMax:185, hrRest:48, peso:75
+};
+const SETUP_KEYS = Object.keys(SETUP0);
+let S = { setup:{...SETUP0}, note:{}, cal:{}, sessions:[], tests:[], body:{} };
+let LIB = { varianti:null, workouts:null, loadedAt:null, fonte:"" };   // librerie dal database
+let view = "dashboard", calWeek = 0, dbRef = null, mcpRef = null, libStato = "non caricate", libErrore = "";
+
+/* ===================== librerie (Supabase via connettore) ===================== */
+const LIB_LS = "ironman226.lib.v1";
+function parseSupabase(payload){
+  // execute_sql risponde con un testo che racchiude il JSON fra tag <untrusted-data-…>
+  if (payload && typeof payload === "object") return payload;
+  const t = String(payload || "");
+  const m = t.match(/<untrusted-data-[^>]*>\s*([\s\S]*?)\s*<\/untrusted-data-[^>]*>/);
+  const body = m ? m[1] : t;
+  return JSON.parse(body);
+}
+async function sql(query){
+  const r = await mcpRef.callTool(SUPABASE_SERVER, "execute_sql", {project_id:SUPABASE_PROJECT, query},
+    {cache:{staleTime:300000}});
+  return parseSupabase(r.payload);
+}
+async function caricaLibrerie(force){
+  if (!force){
+    try{ const raw = localStorage.getItem(LIB_LS); if (raw){ const o = JSON.parse(raw);
+      if (o.varianti && o.workouts){ LIB = o; libStato = "in cache"; return true; } } }catch(e){}
+  }
+  if (!mcpRef){ libStato = "connettore non disponibile"; return false; }
+  libStato = "caricamento…"; libErrore = ""; render();
+  try{
+    const workouts = await sql("select cod,nome,bersaglio,fasi,n_esercizi,minuti,famiglia,zona,nm,fatica,doms,collocazione,n_nuoto,b_bici,c_corsa,ordine from workout_forza order by ordine, cod");
+    const PAGE = 1500, varianti = [];
+    for (let off = 0; ; off += PAGE){
+      const p = await sql(`select cod,base,arch,disc,ob_libro,zona,ob,dist,tempo,edw,ban,rtss from variante order by cod limit ${PAGE} offset ${off}`);
+      varianti.push(...p);
+      libStato = `caricamento… ${varianti.length} varianti`; render();
+      if (p.length < PAGE) break;
+    }
+    LIB = { varianti, workouts, loadedAt: new Date().toISOString(), fonte:"Supabase" };
+    try{ localStorage.setItem(LIB_LS, JSON.stringify(LIB)); }catch(e){}
+    libStato = "caricate"; return true;
+  }catch(e){
+    const code = e && e.code;
+    libErrore = code === "server_not_connected" ? `Aggiungi il connettore ${SUPABASE_SERVER} in claude.ai → Impostazioni → Connettori.`
+      : code === "needs_reauth" ? `Ricollega ${SUPABASE_SERVER} in claude.ai → Impostazioni → Connettori.`
+      : code === "not_in_manifest" ? `Il connettore ${SUPABASE_SERVER} non è consentito per questa pagina (menu Permessi).`
+      : code === "approval_required" ? "La chiamata al database aspetta la tua approvazione."
+      : (e && e.message) || String(e);
+    libStato = "errore"; return false;
+  }
+}
+
+/* ===================== il piano ===================== */
+let PLAN_CACHE = {key:null, val:null};
+/* il piano parte dal lunedì di questa settimana e finisce nella settimana della gara */
+const startDate = () => mondayOf(addDays(todayISO(), 1));   // di domenica il piano parte dal lunedì dopo
+function settimaneAllaGara(){ return Math.floor(diffDays(startDate(), mondayOf(S.setup.raceDate))/7) + 1; }
+function piano(){
+  const st = S.setup;
+  const key = JSON.stringify([st.gradinoFatto, st.obiettivo, st.oreDisponibili, st.tettoRigido, st.oreOggi,
+    settimaneAllaGara(), LIB.loadedAt]);
+  if (PLAN_CACHE.key === key) return PLAN_CACHE.val;
+  let val;
+  const n = settimaneAllaGara();
+  if (!LIB.varianti) val = {errore:"librerie non caricate"};
+  else if (n < 1) val = {errore:"la data della gara è passata"};
+  else {
+    const r = E.generaPiano({gradino_fatto: st.gradinoFatto || null, settimane:n, ore_disponibili:+st.oreDisponibili,
+      ore_oggi:+st.oreOggi, obiettivo:st.obiettivo, tetto_rigido:!!st.tettoRigido}, LIB.varianti, LIB.workouts);
+    val = r.errore ? r : costruisciCalendario(r);
+  }
+  PLAN_CACHE = {key, val}; return val;
+}
+/* Dispone i segmenti della scala sul calendario. ASSUNZIONE (da confermare nella
+   dottrina): il blocco più alto finisce nella settimana della gara; a ritroso vengono
+   le transizioni, i blocchi inferiori e l'introduzione; le settimane che la scala non
+   assorbe stanno all'inizio, "fra due stagioni", fuori dal generatore. */
+function costruisciCalendario(r){
+  const sc = r.scala, segs = [];
+  const push = (seg, n, extra) => { for (let k=0;k<n;k++) segs.push({seg, k, n, ...extra}); };
+  push("attesa", sc.non_assorbite, {label:"Fra due stagioni"});
+  push("intro", sc.intro, {label:"Introduzione"});
+  r.blocchi.forEach((b, bi) => {
+    if (bi > 0) push("transizione", E.TRANSIZIONE, {label:"Transizione", dopo:r.blocchi[bi-1].A.gara});
+    b.W.forEach(wk => segs.push({seg:"blocco", bi, b, wk, label:wk.fase, gradino:b.A.gara,
+      isRace: wk.w === b.A.settimane}));
+  });
+  const weeks = segs.map((s,i) => {
+    const w = i+1, from = addDays(startDate(), i*7), to = addDays(startDate(), i*7+6);
+    const sed = s.seg==="blocco" ? s.b.PIANO.filter(p => p.w === s.wk.w) : [];
+    const h = {n:0,b:0,c:0,f:0,a:0}; let tss = 0;
+    for (const p of sed){ h[DKEY[DISC_UI[p.disc]]] += p.tempo/60; tss += p.rtss; }
+    const hours = h.n+h.b+h.c+h.f+h.a;
+    const tipo = s.seg==="blocco" ? s.wk.tipo : s.seg==="attesa" ? "Fuori dottrina" : s.seg==="intro" ? "Introduzione" : "Transizione";
+    const periodo = s.label;
+    return { i, w, from, to, seg:s.seg, periodo, tipo, gradino:s.gradino||"", bi:s.bi, wb:s.wk?s.wk.w:null,
+      fase:s.wk?s.wk.fase:"", pos:s.wk?s.wk.pos:0, isRace:!!s.isRace, sed, hours, h, tssPlan:Math.round(tss),
+      focus: focusSettimana(s), note:S.note[w]||"" };
+  });
+  return { ...r, weeks, N:weeks.length };
+}
+function focusSettimana(s){
+  if (s.seg==="attesa") return "Settimane che nessun blocco della scala può assorbire (E7): periodo fra due stagioni, fuori dal perimetro della dottrina. Mantenimento libero.";
+  if (s.seg==="intro") return `Introduzione per chi parte da zero (${s.n} settimane, DEFAULT): costruire l'abitudine prima del primo blocco. Il generatore non prescrive sedute qui.`;
+  if (s.seg==="transizione") return `Recupero dopo la gara ${s.dopo}: ${s.n} settimane di transizione senza sedute prescritte.`;
+  const wk = s.wk, b = s.b;
+  const forza = b.PIANO.filter(p => p.w===wk.w && p.disc==="Forza").length;
+  const q = b.PIANO.filter(p => p.w===wk.w && p.dom!=="LOW" && p.disc!=="Forza").length;
+  return `${s.gradino} · settimana ${wk.w} di ${b.A.settimane} · fase ${wk.fase} · ${wk.tipo}` +
+    (wk.tipo==="Carico" ? ` (posizione ${wk.pos} del blocco di 4)` : "") +
+    ` · ${forza} sedute di forza, ${q} sedute di qualità` + (s.isRace ? " · GARA domenica" : "");
+}
+const NW = () => { const p = piano(); return p.weeks ? p.N : 1; };
+const ND = () => NW()*7;
+const weeks = () => { const p = piano(); return p.weeks || []; };
+function weekOfDate(dt){ const n = diffDays(startDate(), dt); return n<0||n>ND()-1 ? null : Math.floor(n/7)+1; }
+
+/* --- una giornata del calendario: generata + override --- */
+function dayPlan(idx){
+  const wi = Math.floor(idx/7), dow = idx%7, wr = weeks()[wi], date = addDays(startDate(), idx);
+  const sess = (wr ? wr.sed : []).filter(p => p.giorno === DAYS[dow]).map(p => ({
+    disc: DISC_UI[p.disc], tipo: p.ob, work: p.struttura + (p.cod==="BRICK" ? "" : ` · ${p.cod}`),
+    min: Math.round(p.tempo), tss: Math.round(p.rtss), dom: p.dom, costo: p.costo || "",
+    rtss_min: p.tempo ? p.rtss/p.tempo : 0 }));
+  const ov = S.cal[idx] || {};
+  if (ov.s) ov.s.forEach((o,k)=>{ if(o && sess[k]) Object.assign(sess[k], o,
+    {tss: o.min!=null ? Math.round(o.min*sess[k].rtss_min) : sess[k].tss}); });
+  return { idx, date, dow, week:wi+1, wr, sess, done:!!ov.done, note:ov.note||"",
+           total: sess.reduce((s,x)=>s+(x.min||0),0) };
+}
+
+/* --- TSS di una sessione registrata --- */
+function sessionTSS(s){
+  if (s.tssOverride != null && s.tssOverride !== "") return +s.tssOverride;
+  const st = S.setup, hrs = (+s.min||0)/60;
+  const fallback = () => Math.round(hrs * Math.pow(+s.rpe||0, 2) * 2);
+  if (s.disc === "Bici"  && +s.np>0 && st.ftp>0)     return Math.round(hrs*Math.pow(s.np/st.ftp,2)*100);
+  if (s.disc === "Corsa" && +s.pace>0 && st.thrPace>0) return Math.round(hrs*Math.pow(st.thrPace/s.pace,2)*100);
+  if (s.disc === "Nuoto" && +s.pace>0 && st.css>0)   return Math.round(hrs*Math.pow(st.css/s.pace,2)*100);
+  return fallback();
+}
+const sortedSessions = () => S.sessions.slice().sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);
+function weekActuals(){
+  const map = {};
+  for (const s of S.sessions){
+    const w = weekOfDate(s.date); if (!w) continue;
+    const m = map[w] || (map[w] = {min:0, tss:0, d:{}});
+    m.min += +s.min||0; m.tss += sessionTSS(s);
+    m.d[s.disc] = (m.d[s.disc]||0) + (+s.min||0);
+  }
+  return map;
+}
+function pmc(){
+  const daily = {}, dailyMin = {};
+  for (const s of S.sessions){ daily[s.date] = (daily[s.date]||0) + sessionTSS(s); dailyMin[s.date] = (dailyMin[s.date]||0) + (+s.min||0); }
+  const out = []; let ctl = S.setup.ctl0, atl = S.setup.ctl0;
+  for (let i=0;i<ND();i++){
+    const date = addDays(startDate(), i), tss = daily[date]||0;
+    const tsb = i===0 ? 0 : Math.round((ctl-atl)*10)/10;
+    ctl = Math.round((ctl + (tss-ctl)/42)*10)/10;
+    atl = Math.round((atl + (tss-atl)/7)*10)/10;
+    out.push({i, date, week:Math.floor(i/7)+1, tss, min:dailyMin[date]||0, ctl, atl, tsb});
+  }
+  return out;
+}
+/* --- zone, calcolate dalle soglie --- */
+const ZONES = {
+  bikePw:[["Z1","Recupero attivo",0,.55,"Pedalata sciolta, scarico fra i blocchi"],
+    ["Z2","Fondo aerobico",.56,.75,"Il pane quotidiano dell'Ironman: lunghi e volume"],
+    ["Z3","Medio / Tempo",.76,.90,"Ritmo gara Ironman ≈ 0,68-0,75 FTP"],
+    ["Z4","Soglia",.91,1.05,"Ripetute 8-20', costruzione della soglia"],
+    ["Z5","VO2max",1.06,1.20,"Ripetute 3-5', utile in Build"],
+    ["Z6","Anaerobico",1.21,1.50,"30\"-2', marginale sulla lunga distanza"],
+    ["Z7","Neuromuscolare",1.51,2.50,"Sprint, richiami di forza-velocità"]],
+  hr:[["Z1","Recupero",0,.80],["Z2","Fondo aerobico",.81,.89],["Z3","Medio",.90,.93],
+    ["Z4","Soglia",.94,.99],["Z5a","Sopra-soglia",1.00,1.02],["Z5b","VO2max",1.03,1.06],
+    ["Z5c","Anaerobico",1.07,1.15]],
+  hrRun:[["Z1","Recupero",0,.84],["Z2","Fondo aerobico",.85,.89],["Z3","Medio",.90,.94],
+    ["Z4","Soglia",.95,.99],["Z5a","Sopra-soglia",1.00,1.02],["Z5b","VO2max",1.03,1.06],
+    ["Z5c","Anaerobico",1.07,1.15]],
+  runPace:[["Z1","Recupero",1.30,1.60,"Rigenerante"],["Z2","Fondo aerobico",1.14,1.29,"Il ritmo dei lunghi"],
+    ["Z3","Medio",1.06,1.13,"≈ ritmo maratona Ironman"],["Z4","Soglia",1.00,1.05,"Ritmo soglia"],
+    ["Z5a","Sopra-soglia",.97,.99,""],["Z5b","VO2max",.90,.96,""],["Z5c","Anaerobico",.80,.89,""]],
+  swim:[["Z1","Recupero / tecnica",12,20],["Z2","Fondo aerobico",6,11],["Z3","Medio",4,6],
+    ["Z4","Soglia (CSS)",-2,2],["Z5","VO2max",-8,-3]]
+};
+</script>
+<script>
+"use strict";
+/* ===================== persistenza ===================== */
+const LS = "ironman226.v2";
+const PARTS = { config:()=>({setup:S.setup, note:S.note}), calendar:()=>({cal:S.cal}),
+                tests:()=>({tests:S.tests}), body:()=>({body:S.body}), sessions:()=>({sessions:S.sessions}) };
+let saveTimer = null, pendingParts = new Set();
+function setSave(mode,txt){ const d = document.getElementById("saveDot");
+  d.className = "savedot "+mode; d.lastElementChild.textContent = txt; }
+function persist(part){
+  pendingParts.add(part);
+  try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){}
+  if (!dbRef){ setSave("", "salvato su questo browser"); return; }
+  setSave("pending","salvataggio…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const parts = [...pendingParts]; pendingParts.clear();
+    try{
+      await Promise.all(parts.map(p => dbRef.doc("plan/"+p).set(PARTS[p]())));
+      setSave("", "sincronizzato");
+    }catch(e){ setSave("off", e && e.code === "revoked" ? "sola lettura" : "salvato in locale"); }
+  }, 700);
+}
+function mergeState(o){
+  if (!o) return;
+  if (o.setup){ for (const k of SETUP_KEYS) if (o.setup[k] !== undefined) S.setup[k] = o.setup[k]; }
+  if (o.note && typeof o.note === "object") S.note = o.note;
+  if (o.cal) S.cal = o.cal;
+  if (Array.isArray(o.sessions)) S.sessions = o.sessions.filter(s => !s.demo);
+  if (Array.isArray(o.tests)) S.tests = o.tests;
+  if (o.body) S.body = o.body;
+}
+async function boot(){
+  try{ const raw = localStorage.getItem(LS); if (raw) mergeState(JSON.parse(raw)); }catch(e){}
+  await caricaLibrerie(false);
+  render();
+  const [db, mcp] = await Promise.all([
+    (async()=>{ try{ return window.claude && claude.use ? await claude.use("db") : null; }catch(e){ return null; } })(),
+    (async()=>{ try{ return window.claude && claude.use ? await claude.use("mcp") : null; }catch(e){ return null; } })()
+  ]);
+  mcpRef = mcp;
+  if (!LIB.varianti){ await caricaLibrerie(true); render(); }
+  if (!db){ setSave("", "salvato su questo browser"); return; }
+  dbRef = db;
+  try{
+    const snaps = await Promise.all(Object.keys(PARTS).map(p => db.doc("plan/"+p).get()));
+    let found = false;
+    snaps.forEach(s => { if (s.exists){ found = true; mergeState(s.data()); } });
+    if (found){ render(); setSave("", "sincronizzato"); }
+    else { setSave("pending","primo salvataggio…"); Object.keys(PARTS).forEach(persist); }
+  }catch(e){ setSave("off","salvato in locale"); }
+}
+
+/* ===================== helpers DOM ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function chip(d){ return `<span class="dc"><i class="d-${esc(d)}"></i>${esc(d)}</span>`; }
+function opts(list, val){ return list.map(o=>`<option ${o===val?"selected":""}>${esc(o)}</option>`).join(""); }
+function complianceClass(r){ if (!isFinite(r)) return "mute"; if (r>=.9 && r<=1.15) return "ok";
+  if (r>=.7 && r<=1.3) return "warn"; return "crit"; }
+const rowClass = w => w.tipo==="Scarico" ? "wk-rest" : w.isRace ? "wk-race" : w.tipo==="Taper" ? "wk-taper" : w.seg==="blocco" ? "wk-load" : "";
+const verPill = v => `<span class="pill ${v[1]==="OK"?"ok":"crit"}" title="${esc(v[2])}">${esc(v[0].trim())}</span>`;
+
+/* ===================== navigazione ===================== */
+const VIEWS = [
+  {id:"dashboard", t:"Dashboard", k:"Sintesi", g:"Sintesi"},
+  {id:"forma",     t:"Forma",     k:"Sintesi", g:"Sintesi"},
+  {id:"atp",       t:"Scala e piano", k:"Pianificazione", g:"Pianificazione"},
+  {id:"calendario",t:"Calendario", k:"Pianificazione", g:"Pianificazione"},
+  {id:"diario",    t:"Diario allenamenti", k:"Registrazione", g:"Registrazione"},
+  {id:"corpo",     t:"Recupero", k:"Registrazione", g:"Registrazione"},
+  {id:"test",      t:"Test", k:"Registrazione", g:"Registrazione"},
+  {id:"zone",      t:"Zone", k:"Riferimenti", g:"Riferimenti"},
+  {id:"setup",     t:"Setup", k:"Riferimenti", g:"Riferimenti"}
+];
+const ICON = { dashboard:"◧", forma:"∿", atp:"▤", calendario:"▦", diario:"✎", corpo:"♡", test:"⌾", zone:"≡", setup:"⚙" };
+function renderNav(){
+  const nSess = S.sessions.length;
+  let html = "", lastG = null;
+  for (const v of VIEWS){
+    if (v.g !== lastG){ html += `<div class="nav-group">${v.g}</div>`; lastG = v.g; }
+    let badge = "";
+    if (v.id === "diario") badge = nSess ? String(nSess) : "";
+    if (v.id === "calendario") { const w = weekOfDate(todayISO()); badge = w ? "S"+w : ""; }
+    html += `<button data-v="${v.id}" class="${view===v.id?"on":""}"><span class="ico">${ICON[v.id]}</span>${esc(v.t)}${badge?`<span class="badge">${badge}</span>`:""}</button>`;
+  }
+  $("#nav").innerHTML = html;
+  $("#nav").querySelectorAll("button").forEach(b => b.onclick = ()=>{ view = b.dataset.v; render(); window.scrollTo(0,0); });
+  const dleft = diffDays(todayISO(), S.setup.raceDate);
+  $("#cdN").textContent = dleft >= 0 ? dleft : "—";
+  $("#cdL").textContent = dleft > 1 ? "giorni al via" : dleft === 1 ? "giorno al via" :
+    dleft === 0 ? "è oggi. Buona gara." : "gara passata";
+  const p = piano();
+  $("#brandSub").textContent = p.scala ? `arrivo: ${p.scala.arrivo}` : "—";
+}
+function bannerPiano(){
+  const p = piano();
+  if (p.weeks) return "";
+  const lib = !LIB.varianti ? `<b>Librerie:</b> ${esc(libStato)}${libErrore?` — ${esc(libErrore)}`:""}` : "";
+  return `<div class="demo-bar"><span>Il piano non può essere generato: ${esc(p.errore||"")}. ${lib}</span>
+    <span class="spacer"></span>${!LIB.varianti && mcpRef?`<button class="btn sm" id="reloadLib">Carica le librerie</button>`:""}</div>`;
+}
+function wireBanner(){ const b = document.getElementById("reloadLib"); if (b) b.onclick = async()=>{ await caricaLibrerie(true); render(); }; }
+function render(){
+  renderNav();
+  const v = VIEWS.find(x=>x.id===view);
+  $("#tbK").textContent = v.k; $("#tbT").textContent = v.t;
+  $("#tbA").innerHTML = "";
+  ({dashboard:vDashboard, forma:vForma, atp:vATP, calendario:vCal, diario:vDiario,
+    corpo:vCorpo, test:vTest, zone:vZone, setup:vSetup})[view]();
+  wireBanner();
+}
+</script>

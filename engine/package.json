@@ -1,0 +1,16 @@
+{
+  "name": "triathlon-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Motore del piano di allenamento triathlon — porting TypeScript di scala_gen.py e generatore.py",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=iife --global-name=TriathlonEngine --outfile=dist/engine.js && esbuild src/index.ts --bundle --format=esm --outfile=dist/engine.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node test/parita.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

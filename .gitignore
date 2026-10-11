@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 *.zip
+node_modules/
+artefatto/shot_*.png
+artefatto/package*.json

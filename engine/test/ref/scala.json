@@ -1,0 +1,900 @@
+{
+ "vittorio": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 26,
+   "ore_disponibili": 11.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "gradino_fatto": "nessuno",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 11.0,
+   "tetto_rigido": false,
+   "arrivo": "Triathlon Sprint",
+   "raggiunge_obiettivo": false,
+   "vincolo": "tempo",
+   "intro": 4,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Sprint",
+     "settimane": 12,
+     "naturali": 8,
+     "riempimento": 4,
+     "picco": 7.5,
+     "ore_inizio": 5.0,
+     "sat": 9.31038622252056
+    }
+   ],
+   "transizioni": 0,
+   "non_assorbite": 10,
+   "settimane_disponibili": 26,
+   "settimane_usate": 26
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Sprint",
+    "picco": 7.5,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 11.0,
+    "tipo": "costruzione",
+    "pendenza": 0.05198950550864412,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Sprint"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Triathlon Sprint"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "10 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "un solo blocco: e' anche il piu' basso, il riempimento gli spetta"
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 7.5 h contro 11.0 dichiarate (tetto non rigido: e' un fabbisogno)"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "VIOLATA",
+    "10 settimane fuori dai blocchi -> periodo non coperto dalla dottrina"
+   ]
+  ]
+ },
+ "z36_11": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 36,
+   "ore_disponibili": 11.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "gradino_fatto": "nessuno",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 11.0,
+   "tetto_rigido": false,
+   "arrivo": "Triathlon Olimpico",
+   "raggiunge_obiettivo": false,
+   "vincolo": "tempo",
+   "intro": 4,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Sprint",
+     "settimane": 12,
+     "naturali": 8,
+     "riempimento": 4,
+     "picco": 7.5,
+     "ore_inizio": 5.0,
+     "sat": 9.31038622252056
+    },
+    {
+     "gradino": "Triathlon Olimpico",
+     "settimane": 16,
+     "naturali": 16,
+     "riempimento": 0,
+     "picco": 19.6,
+     "ore_inizio": 6.4,
+     "sat": 15.206699082890461
+    }
+   ],
+   "transizioni": 2,
+   "non_assorbite": 2,
+   "settimane_disponibili": 36,
+   "settimane_usate": 36
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Sprint",
+    "picco": 7.5,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 11.0,
+    "tipo": "costruzione",
+    "pendenza": 0.05198950550864412,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Triathlon Olimpico",
+    "picco": 19.6,
+    "settimana": 32,
+    "serve_in_piu": 8.6,
+    "gia_coperto": false,
+    "disp_al_momento": 11.0,
+    "tipo": "costruzione",
+    "pendenza": 0.10710480614839502,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Sprint -> Triathlon Olimpico"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Triathlon Olimpico"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "2 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "riempimento sul piu' alto: 0 sett."
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 19.6 h contro 11.0 dichiarate (tetto non rigido: e' un fabbisogno)"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "OK",
+    "2 settimane fuori dai blocchi"
+   ]
+  ]
+ },
+ "z36_20": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 36,
+   "ore_disponibili": 20.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "gradino_fatto": "nessuno",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 20.0,
+   "tetto_rigido": false,
+   "arrivo": "Triathlon Olimpico",
+   "raggiunge_obiettivo": false,
+   "vincolo": "tempo",
+   "intro": 4,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Sprint",
+     "settimane": 12,
+     "naturali": 8,
+     "riempimento": 4,
+     "picco": 7.5,
+     "ore_inizio": 5.0,
+     "sat": 9.31038622252056
+    },
+    {
+     "gradino": "Triathlon Olimpico",
+     "settimane": 16,
+     "naturali": 16,
+     "riempimento": 0,
+     "picco": 19.6,
+     "ore_inizio": 6.4,
+     "sat": 15.206699082890461
+    }
+   ],
+   "transizioni": 2,
+   "non_assorbite": 2,
+   "settimane_disponibili": 36,
+   "settimane_usate": 36
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Sprint",
+    "picco": 7.5,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 20.0,
+    "tipo": "costruzione",
+    "pendenza": 0.05198950550864412,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Triathlon Olimpico",
+    "picco": 19.6,
+    "settimana": 32,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 20.0,
+    "tipo": "costruzione",
+    "pendenza": 0.10710480614839502,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Sprint -> Triathlon Olimpico"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Triathlon Olimpico"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "2 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "riempimento sul piu' alto: 0 sett."
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 19.6 h contro 20.0 dichiarate (tetto non rigido: e' un fabbisogno)"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "OK",
+    "2 settimane fuori dai blocchi"
+   ]
+  ]
+ },
+ "sprint24": {
+  "input": {
+   "gradino_fatto": "Triathlon Sprint",
+   "settimane": 24,
+   "ore_disponibili": 20.0,
+   "ore_oggi": 7.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "gradino_fatto": "Triathlon Sprint",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 20.0,
+   "tetto_rigido": false,
+   "arrivo": "Triathlon Olimpico",
+   "raggiunge_obiettivo": false,
+   "vincolo": "tempo",
+   "intro": 0,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Olimpico",
+     "settimane": 20,
+     "naturali": 16,
+     "riempimento": 4,
+     "picco": 19.6,
+     "ore_inizio": 7.0,
+     "sat": 15.206699082890461
+    }
+   ],
+   "transizioni": 0,
+   "non_assorbite": 4,
+   "settimane_disponibili": 24,
+   "settimane_usate": 24
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Olimpico",
+    "picco": 19.6,
+    "settimana": 18,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 20.0,
+    "tipo": "costruzione",
+    "pendenza": 0.07631615624126575,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Olimpico"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Triathlon Olimpico"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "4 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "un solo blocco: e' anche il piu' basso, il riempimento gli spetta"
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 19.6 h contro 20.0 dichiarate (tetto non rigido: e' un fabbisogno)"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "VIOLATA",
+    "4 settimane fuori dai blocchi -> periodo non coperto dalla dottrina"
+   ]
+  ]
+ },
+ "half14": {
+  "input": {
+   "gradino_fatto": "Half-Ironman",
+   "settimane": 14,
+   "ore_disponibili": 28.0,
+   "ore_oggi": 14.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "gradino_fatto": "Half-Ironman",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 28.0,
+   "tetto_rigido": false,
+   "arrivo": "Ironman",
+   "raggiunge_obiettivo": true,
+   "vincolo": "nessuno: obiettivo raggiungibile",
+   "intro": 0,
+   "blocchi": [
+    {
+     "gradino": "Ironman",
+     "settimane": 12,
+     "naturali": 12,
+     "riempimento": 0,
+     "picco": 27.0,
+     "ore_inizio": 14.0,
+     "sat": 14.461310236798818
+    }
+   ],
+   "transizioni": 0,
+   "non_assorbite": 2,
+   "settimane_disponibili": 14,
+   "settimane_usate": 14
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Ironman",
+    "picco": 27.0,
+    "settimana": 10,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "costruzione",
+    "pendenza": 0.08556158402070357,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Ironman"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Ironman"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "2 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "un solo blocco: e' anche il piu' basso, il riempimento gli spetta"
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 27.0 h contro 28.0 dichiarate (tetto non rigido: e' un fabbisogno)"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "OK",
+    "2 settimane fuori dai blocchi"
+   ]
+  ]
+ },
+ "z6": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 6,
+   "ore_disponibili": 11.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "errore": "nemmeno il primo gradino e' raggiungibile",
+   "gradino_prossimo": "Triathlon Sprint",
+   "settimane_necessarie": 12,
+   "settimane_disponibili": 6,
+   "ore_necessarie": 7.5,
+   "ore_disponibili": 11.0
+  }
+ },
+ "oli60": {
+  "input": {
+   "gradino_fatto": "Triathlon Olimpico",
+   "settimane": 60,
+   "ore_disponibili": 28.0,
+   "ore_oggi": 10.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": false
+  },
+  "piano": {
+   "gradino_fatto": "Triathlon Olimpico",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 28.0,
+   "tetto_rigido": false,
+   "arrivo": "Ironman",
+   "raggiunge_obiettivo": true,
+   "vincolo": "nessuno: obiettivo raggiungibile",
+   "intro": 0,
+   "blocchi": [
+    {
+     "gradino": "Half-Ironman",
+     "settimane": 16,
+     "naturali": 8,
+     "riempimento": 8,
+     "picco": 19.0,
+     "ore_inizio": 10.0,
+     "sat": 14.155395090359793
+    },
+    {
+     "gradino": "Ironman",
+     "settimane": 12,
+     "naturali": 12,
+     "riempimento": 0,
+     "picco": 27.0,
+     "ore_inizio": 16.1,
+     "sat": 11.533205310623696
+    }
+   ],
+   "transizioni": 2,
+   "non_assorbite": 30,
+   "settimane_disponibili": 60,
+   "settimane_usate": 60
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Half-Ironman",
+    "picco": 19.0,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "costruzione",
+    "pendenza": 0.06008633539004138,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Ironman",
+    "picco": 27.0,
+    "settimana": 28,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "costruzione",
+    "pendenza": 0.06676126084926715,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Half-Ironman -> Ironman"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Ironman"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "30 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "riempimento sul piu' alto: 0 sett."
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 27.0 h contro 28.0 dichiarate (tetto non rigido: e' un fabbisogno)"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "VIOLATA",
+    "30 settimane fuori dai blocchi -> periodo non coperto dalla dottrina"
+   ]
+  ]
+ },
+ "vittorio_rigido": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 26,
+   "ore_disponibili": 11.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": true
+  },
+  "piano": {
+   "gradino_fatto": "nessuno",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 11.0,
+   "tetto_rigido": true,
+   "arrivo": "Triathlon Sprint",
+   "raggiunge_obiettivo": false,
+   "vincolo": "ore e tempo",
+   "intro": 4,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Sprint",
+     "settimane": 12,
+     "naturali": 8,
+     "riempimento": 4,
+     "picco": 7.5,
+     "ore_inizio": 5.0,
+     "sat": 9.31038622252056
+    }
+   ],
+   "transizioni": 0,
+   "non_assorbite": 10,
+   "settimane_disponibili": 26,
+   "settimane_usate": 26
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Sprint",
+    "picco": 7.5,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 11.0,
+    "tipo": "costruzione",
+    "pendenza": 0.05198950550864412,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Sprint"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Triathlon Sprint"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "10 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "un solo blocco: e' anche il piu' basso, il riempimento gli spetta"
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 7.5 h contro 11.0 dichiarate"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "VIOLATA",
+    "10 settimane fuori dai blocchi -> periodo non coperto dalla dottrina"
+   ]
+  ]
+ },
+ "z104_28_rigido": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 104,
+   "ore_disponibili": 28.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": true
+  },
+  "piano": {
+   "gradino_fatto": "nessuno",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 28.0,
+   "tetto_rigido": true,
+   "arrivo": "Ironman",
+   "raggiunge_obiettivo": true,
+   "vincolo": "nessuno: obiettivo raggiungibile",
+   "intro": 4,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Sprint",
+     "settimane": 12,
+     "naturali": 8,
+     "riempimento": 4,
+     "picco": 7.5,
+     "ore_inizio": 5.0,
+     "sat": 9.31038622252056
+    },
+    {
+     "gradino": "Triathlon Olimpico",
+     "settimane": 20,
+     "naturali": 16,
+     "riempimento": 4,
+     "picco": 19.6,
+     "ore_inizio": 6.4,
+     "sat": 15.206699082890461
+    },
+    {
+     "gradino": "Half-Ironman",
+     "settimane": 8,
+     "naturali": 8,
+     "riempimento": 0,
+     "picco": 19.0,
+     "ore_inizio": 16.7,
+     "sat": 3.6937466734347666
+    },
+    {
+     "gradino": "Ironman",
+     "settimane": 12,
+     "naturali": 12,
+     "riempimento": 0,
+     "picco": 27.0,
+     "ore_inizio": 16.1,
+     "sat": 11.533205310623696
+    }
+   ],
+   "transizioni": 6,
+   "non_assorbite": 42,
+   "settimane_disponibili": 104,
+   "settimane_usate": 104
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Sprint",
+    "picco": 7.5,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "costruzione",
+    "pendenza": 0.05198950550864412,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Triathlon Olimpico",
+    "picco": 19.6,
+    "settimana": 36,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "costruzione",
+    "pendenza": 0.0832276104551577,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Half-Ironman",
+    "picco": 19.0,
+    "settimana": 46,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "specificita' a volume quasi costante",
+    "pendenza": 0.026141910948657587,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Ironman",
+    "picco": 27.0,
+    "settimana": 60,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 28.0,
+    "tipo": "costruzione",
+    "pendenza": 0.06676126084926715,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Sprint -> Triathlon Olimpico -> Half-Ironman -> Ironman"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Ironman"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "42 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "riempimento sul piu' alto: 0 sett."
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 27.0 h contro 28.0 dichiarate"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "VIOLATA",
+    "42 settimane fuori dai blocchi -> periodo non coperto dalla dottrina"
+   ]
+  ]
+ },
+ "z52_20_rigido": {
+  "input": {
+   "gradino_fatto": null,
+   "settimane": 52,
+   "ore_disponibili": 20.0,
+   "ore_oggi": 5.0,
+   "obiettivo": "Ironman",
+   "tetto_rigido": true
+  },
+  "piano": {
+   "gradino_fatto": "nessuno",
+   "obiettivo": "Ironman",
+   "ore_disponibili": 20.0,
+   "tetto_rigido": true,
+   "arrivo": "Half-Ironman",
+   "raggiunge_obiettivo": false,
+   "vincolo": "ore e tempo",
+   "intro": 4,
+   "blocchi": [
+    {
+     "gradino": "Triathlon Sprint",
+     "settimane": 12,
+     "naturali": 8,
+     "riempimento": 4,
+     "picco": 7.5,
+     "ore_inizio": 5.0,
+     "sat": 9.31038622252056
+    },
+    {
+     "gradino": "Triathlon Olimpico",
+     "settimane": 20,
+     "naturali": 16,
+     "riempimento": 4,
+     "picco": 19.6,
+     "ore_inizio": 6.4,
+     "sat": 15.206699082890461
+    },
+    {
+     "gradino": "Half-Ironman",
+     "settimane": 8,
+     "naturali": 8,
+     "riempimento": 0,
+     "picco": 19.0,
+     "ore_inizio": 16.7,
+     "sat": 3.6937466734347666
+    }
+   ],
+   "transizioni": 4,
+   "non_assorbite": 4,
+   "settimane_disponibili": 52,
+   "settimane_usate": 52
+  },
+  "fabbisogno": [
+   {
+    "gradino": "Triathlon Sprint",
+    "picco": 7.5,
+    "settimana": 14,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 20.0,
+    "tipo": "costruzione",
+    "pendenza": 0.05198950550864412,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Triathlon Olimpico",
+    "picco": 19.6,
+    "settimana": 36,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 20.0,
+    "tipo": "costruzione",
+    "pendenza": 0.0832276104551577,
+    "pendenza_ok": true
+   },
+   {
+    "gradino": "Half-Ironman",
+    "picco": 19.0,
+    "settimana": 46,
+    "serve_in_piu": 0.0,
+    "gia_coperto": true,
+    "disp_al_momento": 20.0,
+    "tipo": "specificita' a volume quasi costante",
+    "pendenza": 0.026141910948657587,
+    "pendenza_ok": true
+   }
+  ],
+  "verifiche": [
+   [
+    "I8  nessun gradino saltato",
+    "OK",
+    "Triathlon Sprint -> Triathlon Olimpico -> Half-Ironman"
+   ],
+   [
+    "I8b arrivo non oltre il raggiungibile",
+    "OK",
+    "arrivo Half-Ironman"
+   ],
+   [
+    "E7  nulla di assorbibile e' rimasto fuori",
+    "OK",
+    "4 settimane non assorbite"
+   ],
+   [
+    "E7b il gradino piu' alto non e' riempito",
+    "OK",
+    "riempimento sul piu' alto: 0 sett."
+   ],
+   [
+    "A3  ore richieste da ogni blocco",
+    "OK",
+    "picco massimo 19.6 h contro 20.0 dichiarate"
+   ],
+   [
+    "E7c il residuo sta dentro una transizione",
+    "VIOLATA",
+    "4 settimane fuori dai blocchi -> periodo non coperto dalla dottrina"
+   ]
+  ]
+ }
+}

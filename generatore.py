@@ -22,6 +22,9 @@ else:
                         zona=r[13], ob=r[14], dist=r[10], tempo=r[11],
                         edw=r[21], ban=r[22], rtss=r[23]))
     json.dump(LIB, open(_CACHE,'w'))
+# ordine deterministico: l'ordine delle righe di una sorgente (file o tabella) non e'
+# un fatto, e i pareggi di scegli() si risolvono sempre allo stesso modo (C-contratto)
+LIB.sort(key=lambda x: x['cod'])
 print(f"libreria utilizzabile: {len(LIB)} allenamenti")
 DOM={'Z1':'LOW','Z2':'LOW','Z3':'MOD','Z4':'HIGH','Z5':'HIGH'}
 for x in LIB: x['dom']=DOM.get(x['zona'],'LOW')

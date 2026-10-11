@@ -32,3 +32,14 @@ C1-C8 della dottrina. Principio: quasi nulla si aggiorna, si aggiunge.
 
 Le tabelle dei dati dell'atleta hanno RLS attiva e nessuna policy: chiuse finche' non esiste
 l'autenticazione.
+
+## Il motore in TypeScript e l'artefatto
+
+| Cartella | Che cosa contiene |
+| --- | --- |
+| `engine/` | porting 1:1 di `scala_gen.py` e `generatore.py` (`npm test`: parita' con i riferimenti Python). Il bundle `dist/engine.js` espone il globale `TriathlonEngine` |
+| `artefatto/` | la pagina *Ironman 226*: quattro parti (`01_head`, `02_model`, `03_charts`, `04_views`) che `build.sh` assembla in `ironman226.html`; `test_page.mjs` la collauda in Chromium con le librerie dai CSV |
+
+L'artefatto legge le librerie dal database tramite il connettore Supabase (capability
+`mcp`, tool `execute_sql`) e le tiene in cache nel browser; i dati dell'atleta (diario,
+test, recupero) restano per ora nel database dell'artefatto.

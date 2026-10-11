@@ -1,0 +1,487 @@
+<script>
+"use strict";
+const DCOL = {Nuoto:"var(--s1)", Bici:"var(--s2)", Corsa:"var(--s3)", Forza:"var(--s4)", Altro:"var(--s5)"};
+const vuoto = (msg) => `<div class="panel"><div class="empty">${msg}</div></div>`;
+
+/* ---------------------------------------------------- DASHBOARD */
+function vDashboard(){
+  const p = piano();
+  if (!p.weeks){ $("#view").innerHTML = bannerPiano() + vuoto("Compila il Setup e carica le librerie: la dashboard si riempie da sola."); return; }
+  const wks = weeks(), wa = weekActuals(), pm = pmc(), last = ND()-1;
+  const planH = wks.reduce((s,w)=>s+w.hours,0), planT = wks.reduce((s,w)=>s+w.tssPlan,0);
+  const actH = S.sessions.reduce((s,x)=>s+(+x.min||0),0)/60;
+  const actT = S.sessions.reduce((s,x)=>s+sessionTSS(x),0);
+  const ti = Math.max(0, Math.min(last, diffDays(startDate(), todayISO())));
+  const now = pm[ti];
+  const doneWeeks = wks.filter(w => w.to < todayISO());
+  const dueH = doneWeeks.reduce((s,w)=>s+w.hours,0);
+  const rate = dueH ? actH/dueH : NaN;
+  const sc = p.scala;
+
+  $("#view").innerHTML = `
+  <div class="stats g4">
+    <div class="stat"><div class="lab">Arrivo della scala</div>
+      <div class="val" style="font-size:19px;line-height:1.2">${esc(sc.arrivo)}</div>
+      <div class="sub">${sc.raggiunge_obiettivo ? `obiettivo ${esc(sc.obiettivo)} raggiungibile` : `obiettivo ${esc(sc.obiettivo)} non raggiungibile · morde: ${esc(sc.vincolo)}`}</div></div>
+    <div class="stat"><div class="lab">Ore registrate</div>
+      <div class="val">${n1(actH)}<small> / ${n1(planH)} h</small></div>
+      <div class="sub">${doneWeeks.length ? `<span class="pill ${complianceClass(rate)}">${pct(rate)} di quanto previsto finora</span>` : "il piano non è ancora iniziato"}</div></div>
+    <div class="stat"><div class="lab">CTL — fitness</div><div class="val">${n1(now.ctl)}</div>
+      <div class="sub">al via ${n1(pm[last].ctl)} · ${nf(actT)} / ${nf(planT)} TSS</div></div>
+    <div class="stat"><div class="lab">TSB — forma</div><div class="val">${n1(now.tsb)}</div>
+      <div class="sub">${now.tsb > 5 ? "fresco" : now.tsb > -10 ? "in equilibrio" : now.tsb > -30 ? "carico produttivo" : "fatica alta"}</div></div>
+  </div>
+
+  <div class="panel"><header><h2>Ore per settimana</h2>
+    <span class="note">pianificato dal motore vs registrato, con le fasi del blocco</span></header>
+    <div class="body">${legend([{c:"var(--plan-soft)",t:"Pianificato",outline:1},{c:"var(--s1)",t:"Registrato"}])}
+      <div id="cW"></div></div></div>
+
+  <div class="panel"><header><h2>Carico per settimana (rTSS)</h2>
+    <span class="note">il carico pianificato è la somma del rTSS delle sedute pescate dalla libreria</span></header>
+    <div class="body">${legend([{c:"var(--plan-soft)",t:"Pianificato",outline:1},{c:"var(--s1)",t:"Registrato"}])}
+      <div id="cT"></div></div></div>
+
+  <div class="grid g2">
+    <div class="panel"><header><h2>Volume per disciplina</h2></header>
+      <div class="body">${legend([{c:"var(--plan-soft)",t:"Pianificato",outline:1},{c:"var(--ink-3)",t:"Registrato (colore della disciplina)"}])}
+        <div id="cD"></div></div></div>
+    <div class="panel"><header><h2>Riepilogo per blocco</h2></header>
+      <div class="tw"><table><thead><tr><th>Blocco</th><th class="num">Sett.</th>
+        <th class="num">Ore pian.</th><th class="num">Ore reg.</th><th class="num">rTSS pian.</th>
+        <th class="num">TSS reg.</th><th class="num">Aderenza</th></tr></thead><tbody>
+        ${[["attesa","Fra due stagioni"],["intro","Introduzione"],...p.blocchi.map((b,i)=>["b"+i, b.A.gara]),["transizione","Transizioni"]].map(([key,lab])=>{
+          const ws = wks.filter(w => key.startsWith("b") && key!=="blocco" ? (w.seg==="blocco" && w.bi===+key.slice(1)) : w.seg===key); if(!ws.length) return "";
+          const ph = ws.reduce((s,w)=>s+w.hours,0), pt = ws.reduce((s,w)=>s+w.tssPlan,0);
+          const ah = ws.reduce((s,w)=>s+((wa[w.w]||{min:0}).min)/60,0);
+          const at = ws.reduce((s,w)=>s+((wa[w.w]||{tss:0}).tss),0);
+          return `<tr><td>${esc(lab)}</td>
+            <td class="num dim">${ws.length}</td><td class="num">${n1(ph)}</td><td class="num">${n1(ah)}</td>
+            <td class="num">${pt}</td><td class="num">${Math.round(at)}</td>
+            <td class="num">${ah&&ph?`<span class="pill ${complianceClass(ah/ph)}">${pct(ah/ph)}</span>`:'<span class="dim">—</span>'}</td></tr>`;
+        }).join("")}
+      </tbody></table></div></div>
+  </div>`;
+  chartWeekly($("#cW"), {label:"Ore", plan:wks.map(w=>w.hours), act:wks.map(w=>(wa[w.w]||{min:0}).min/60),
+    unit:"h", fmt:v=>n1(v)});
+  chartWeekly($("#cT"), {label:"TSS", plan:wks.map(w=>w.tssPlan), act:wks.map(w=>(wa[w.w]||{tss:0}).tss),
+    unit:"TSS", fmt:v=>Math.round(v)});
+  const group = {Nuoto:["Nuoto"], Bici:["Bici"], Corsa:["Corsa"], Forza:["Forza","Bodyweight"], Altro:["Altro","Brick"]};
+  chartDisc($("#cD"), Object.keys(group).map(k=>({
+    name:k, color:DCOL[k],
+    plan: wks.reduce((s,w)=>s+w.h[DKEY[k]],0),
+    act: S.sessions.filter(s=>group[k].includes(s.disc)).reduce((s,x)=>s+(+x.min||0),0)/60 })));
+}
+
+/* ---------------------------------------------------- FORMA */
+function vForma(){
+  const p = piano();
+  if (!p.weeks){ $("#view").innerHTML = bannerPiano() + vuoto("La curva di forma ha bisogno del piano."); return; }
+  const pm = pmc(), wks = weeks(), wa = weekActuals(), last = ND()-1;
+  const ti = Math.max(0, Math.min(last, diffDays(startDate(), todayISO())));
+  const ctlMax = Math.max(...pm.map(d=>d.ctl)), tsbMin = Math.min(...pm.map(d=>d.tsb));
+  $("#view").innerHTML = `
+  <p class="hint">CTL è la fitness accumulata (media esponenziale del TSS su 42 giorni), ATL la fatica recente (7 giorni),
+  TSB la forma del giorno (CTL − ATL del giorno prima). Le curve valgono qualcosa solo se il diario è compilato con continuità:
+  quello che non registri, per questo grafico non è successo.</p>
+  <div class="stats g4">
+    <div class="stat"><div class="lab">CTL oggi</div><div class="val">${n1(pm[ti].ctl)}</div>
+      <div class="sub">ATL ${n1(pm[ti].atl)} · TSB ${n1(pm[ti].tsb)}</div></div>
+    <div class="stat"><div class="lab">CTL massimo</div><div class="val">${n1(ctlMax)}</div>
+      <div class="sub">${fmtFull(pm.find(d=>d.ctl===ctlMax).date)}</div></div>
+    <div class="stat"><div class="lab">CTL il giorno gara</div><div class="val">${n1(pm[last].ctl)}</div>
+      <div class="sub">quanta fitness porti al via</div></div>
+    <div class="stat"><div class="lab">TSB il giorno gara</div><div class="val">${n1(pm[last].tsb)}</div>
+      <div class="sub">obiettivo fra +5 e +20 · minimo del piano ${n1(tsbMin)}</div></div>
+  </div>
+  <div class="panel"><header><h2>Curva di forma</h2><span class="note">${ND()} giorni, dal via alla gara</span></header>
+    <div class="body">${legend([{c:"var(--s1)",t:"CTL — fitness",line:1},{c:"var(--s2)",t:"ATL — fatica",line:1},
+      {c:"var(--s3)",t:"TSB — forma",line:1}])}<div id="cP"></div></div></div>
+  <div class="panel"><header><h2>Settimana per settimana</h2>
+    <span class="note">valori a fine settimana</span></header>
+    <div class="tw" style="max-height:520px;overflow-y:auto"><table><thead><tr>
+      <th>Sett.</th><th>Periodo</th><th>Dal</th><th class="num">Ore reg.</th><th class="num">TSS reg.</th>
+      <th class="num">CTL</th><th class="num">ATL</th><th class="num">TSB</th></tr></thead><tbody>
+      ${wks.map(w=>{ const end = pm[w.i*7+6], a = wa[w.w]||{min:0,tss:0};
+        return `<tr class="${rowClass(w)}">
+        <td class="mono">${w.w}</td><td>${esc(w.periodo)}</td><td class="mono dim">${fmtFull(w.from)}</td>
+        <td class="num">${n1(a.min/60)}</td><td class="num">${Math.round(a.tss)}</td>
+        <td class="num">${n1(end.ctl)}</td><td class="num">${n1(end.atl)}</td>
+        <td class="num" style="color:${end.tsb<-30?"var(--crit)":end.tsb>5?"var(--ok)":"inherit"}">${n1(end.tsb)}</td></tr>`;
+      }).join("")}</tbody></table></div></div>`;
+  chartPMC($("#cP"), pm);
+}
+
+/* ---------------------------------------------------- SCALA E PIANO */
+function vATP(){
+  const p = piano();
+  if (!p.weeks){ $("#view").innerHTML = bannerPiano() + vuoto("Nessun piano da mostrare."); return; }
+  const wks = weeks(), wa = weekActuals(), sc = p.scala;
+  const tot = wks.reduce((a,w)=>({h:a.h+w.hours, n:a.n+w.h.n, b:a.b+w.h.b, c:a.c+w.h.c, f:a.f+w.h.f, t:a.t+w.tssPlan}), {h:0,n:0,b:0,c:0,f:0,t:0});
+  const actH = S.sessions.reduce((s,x)=>s+(+x.min||0),0)/60;
+  const actT = S.sessions.reduce((s,x)=>s+sessionTSS(x),0);
+  $("#tbA").innerHTML = `<span class="pill mute">${n1(tot.h)} h totali · ${nf(tot.t)} rTSS</span>`;
+  $("#view").innerHTML = `
+  <p class="hint">Livello 1, la scala (I8): da <b>${esc(sc.gradino_fatto)}</b> verso <b>${esc(sc.obiettivo)}</b>, con ${sc.settimane_disponibili} settimane
+  e ${sc.ore_disponibili} ore dichiarate${sc.tetto_rigido?" come tetto rigido":" come fabbisogno"}. L'arrivo realistico è <b>${esc(sc.arrivo)}</b>
+  (vincolo: ${esc(sc.vincolo)}). Livello 2, il generatore, produce le sedute di ogni blocco pescando dalla libreria.</p>
+
+  <div class="panel"><header><h2>La scala</h2><span class="note">E7: il surplus si assorbe, non si attende</span>
+    <span class="spacer"></span>${p.verifiche_scala.map(verPill).join(" ")}</header>
+    <div class="tw"><table><thead><tr><th>Segmento</th><th class="num">Settimane</th><th class="num">di cui riempimento</th>
+      <th class="num">Ore inizio</th><th class="num">Ore picco</th><th class="num">Picco alla sett.</th><th>Tipo</th><th class="num">Pendenza/sett.</th><th>Sedute</th><th>Regole del blocco</th></tr></thead><tbody>
+      ${sc.non_assorbite ? `<tr><td>Fra due stagioni</td><td class="num">${sc.non_assorbite}</td><td class="num dim">—</td><td colspan="7" class="dim">fuori dottrina: nessun blocco può assorbirle</td></tr>` : ""}
+      ${sc.intro ? `<tr><td>Introduzione</td><td class="num">${sc.intro}</td><td class="num dim">—</td><td colspan="7" class="dim">da zero (DEFAULT): nessuna seduta generata</td></tr>` : ""}
+      ${sc.blocchi.map((b,i)=>{ const f = p.fabbisogno[i], pb = p.blocchi[i];
+        return `<tr><td><b>${esc(b.gradino)}</b></td><td class="num">${b.settimane}</td><td class="num">${b.riempimento||"—"}</td>
+        <td class="num">${n1(b.ore_inizio)}</td><td class="num">${n1(b.picco)}</td><td class="num">${f.settimana}</td>
+        <td>${esc(f.tipo)}</td><td class="num"><span class="pill ${f.pendenza_ok?"ok":"warn"}">${pct(f.pendenza)}</span></td>
+        <td class="num">${pb.PIANO.length} · ${n1(pb.riepilogo.ore)} h · LOW ${Math.round(pb.riepilogo.low)}% MOD ${Math.round(pb.riepilogo.mod)}% HIGH ${Math.round(pb.riepilogo.high)}%</td>
+        <td><span class="pill ${pb.verifiche.every(v=>v[1]==="OK")?"ok":"warn"}">${pb.verifiche.filter(v=>v[1]==="OK").length}/${pb.verifiche.length}</span>
+          ${pb.verifiche.filter(v=>v[1]!=="OK").map(v=>`<span class="pill crit" title="${esc(v[2])}">${esc(v[0].trim())}</span>`).join(" ")}</td></tr>`;}).join("")}
+      ${sc.transizioni ? `<tr><td>Transizioni post-gara</td><td class="num">${sc.transizioni}</td><td colspan="8" class="dim">${E.TRANSIZIONE} settimane dopo ogni gara intermedia (DEFAULT)</td></tr>` : ""}
+    </tbody></table></div></div>
+
+  ${p.blocchi.map((pb,i)=>`<details class="panel" style="padding:0"><summary style="padding:13px 18px;cursor:pointer;font-weight:700;font-size:13px">
+    Le ${pb.verifiche.length} verifiche del blocco ${esc(pb.A.gara)} — ${pb.verifiche.filter(v=>v[1]==="OK").length} rispettate</summary>
+    <div class="tw"><table class="dense"><tbody>${pb.verifiche.map(v=>`<tr><td style="width:80px"><span class="pill ${v[1]==="OK"?"ok":"crit"}">${v[1]}</span></td>
+      <td style="width:260px"><b>${esc(v[0].trim())}</b></td><td class="dim">${esc(v[2])}</td></tr>`).join("")}</tbody></table></div></details>`).join("")}
+
+  <div class="panel"><header><h2>Settimana per settimana</h2><span class="note">ore e rTSS sono la somma delle sedute generate; la nota è tua</span></header>
+  <div class="tw" style="max-height:70vh;overflow-y:auto"><table>
+    <thead><tr><th>S</th><th>Dal</th><th>Segmento</th><th>Fase</th><th>Tipo</th>
+      <th class="num">Ore</th><th class="num">Nuo</th><th class="num">Bici</th><th class="num">Cor</th>
+      <th class="num">For</th><th class="num">rTSS</th>
+      <th class="num">Ore reg.</th><th class="num">TSS reg.</th><th class="num">Ader.</th>
+      <th style="min-width:340px">Che cosa succede</th><th style="min-width:180px">Note</th></tr></thead>
+    <tbody>${wks.map(w=>{ const a = wa[w.w]||{min:0,tss:0}, ah = a.min/60;
+      return `<tr data-w="${w.w}" class="${rowClass(w)}">
+      <td class="mono">${w.w}</td><td class="mono dim" style="white-space:nowrap">${fmtD(w.from)}</td>
+      <td>${esc(w.gradino || w.periodo)}${w.isRace?' <span class="pill crit">gara</span>':""}</td>
+      <td>${esc(w.seg==="blocco"?w.fase:"—")}</td><td>${esc(w.tipo)}</td>
+      <td class="num mono"><b>${n2(w.hours)}</b></td>
+      <td class="num mono dim">${n2(w.h.n)}</td><td class="num mono dim">${n2(w.h.b)}</td>
+      <td class="num mono dim">${n2(w.h.c)}</td><td class="num mono dim">${n2(w.h.f)}</td>
+      <td class="num mono">${w.tssPlan}</td>
+      <td class="num mono">${ah?n2(ah):'<span class="dim">—</span>'}</td>
+      <td class="num mono">${a.tss?Math.round(a.tss):'<span class="dim">—</span>'}</td>
+      <td class="num">${ah&&w.hours?`<span class="pill ${complianceClass(ah/w.hours)}">${pct(ah/w.hours)}</span>`:'<span class="dim">—</span>'}</td>
+      <td class="dim" style="font-size:11.5px">${esc(w.focus)}</td>
+      <td><input data-k="note" value="${esc(w.note)}" placeholder="—"></td></tr>`;}).join("")}
+    <tr class="tot"><td colspan="5">Totale piano</td><td class="num mono">${n1(tot.h)}</td>
+      <td class="num mono">${n1(tot.n)}</td><td class="num mono">${n1(tot.b)}</td><td class="num mono">${n1(tot.c)}</td>
+      <td class="num mono">${n1(tot.f)}</td><td class="num mono">${tot.t}</td>
+      <td class="num mono">${n1(actH)}</td><td class="num mono">${Math.round(actT)}</td>
+      <td class="num"><span class="pill ${complianceClass(actH/tot.h)}">${pct(actH/tot.h)}</span></td>
+      <td colspan="2"></td></tr>
+    </tbody></table></div></div>`;
+  $("#view").querySelectorAll("tbody tr[data-w] [data-k=note]").forEach(inp=>{
+    inp.onchange = ()=>{ S.note[inp.closest("tr").dataset.w] = inp.value; PLAN_CACHE.key = null; persist("config"); };
+  });
+}
+</script>
+<script>
+"use strict";
+/* ---------------------------------------------------- CALENDARIO */
+function vCal(){
+  const p = piano();
+  if (!p.weeks){ $("#view").innerHTML = bannerPiano() + vuoto("Il calendario si riempie quando il piano esiste."); return; }
+  const wks = weeks(), wa = weekActuals(), N = NW();
+  const tw = weekOfDate(todayISO()); if (tw && !calWeek) calWeek = tw;
+  calWeek = Math.max(1, Math.min(N, calWeek||tw||1));
+  const w = wks[calWeek-1], a = wa[calWeek] || {min:0,tss:0};
+  const maxH = Math.max(...wks.map(x=>x.hours), 0.1);
+  $("#tbA").innerHTML = `<button class="btn sm" id="prevW">‹</button>
+    <button class="btn sm" id="todayW">oggi</button><button class="btn sm" id="nextW">›</button>`;
+  $("#view").innerHTML = `
+  <div class="wknav"><div class="wkstrip" id="strip">
+    ${wks.map(x=>`<button data-w="${x.w}" title="S${x.w} · ${esc(x.periodo)} · ${n1(x.hours)} h"
+      class="${x.w===calWeek?"on":""} ${x.tipo==="Scarico"?"rest":x.isRace?"race":x.tipo==="Taper"?"taper":""}">
+      <span style="height:${Math.round(x.hours/maxH*100)}%"></span></button>`).join("")}
+  </div></div>
+  <div class="panel"><header>
+    <h2>Settimana ${calWeek} · ${esc(w.gradino || w.periodo)}${w.seg==="blocco"?` · ${esc(w.fase)}`:""}</h2>
+    <span class="note">${fmtFull(w.from)} – ${fmtFull(w.to)} · ${esc(w.tipo)}${w.isRace?" · gara domenica":""}</span>
+    <span class="spacer"></span>
+    <span class="pill mute">${n2(w.hours)} h pianificate · ${w.tssPlan} rTSS</span>
+    ${a.min?`<span class="pill ${complianceClass(a.min/60/(w.hours||1))}">${n2(a.min/60)} h registrate${w.hours?` · ${pct(a.min/60/w.hours)}`:""}</span>`:""}
+  </header><div class="body">
+    <p style="margin:0 0 14px;color:var(--ink-2);font-size:12.5px;max-width:92ch">${esc(w.focus)}</p>
+    ${w.hours?`<div class="split" style="margin-bottom:6px">
+      ${["n","b","c","f"].map((k,i)=>{const v=w.h[k]/w.hours;
+        return v>0?`<i style="width:${(v*100).toFixed(1)}%;background:${["var(--s1)","var(--s2)","var(--s3)","var(--s4)"][i]}"></i>`:""}).join("")}
+    </div>
+    <div class="legend" style="margin:0">${["Nuoto","Bici","Corsa","Forza"].map(k=>
+      `<span class="k"><i style="background:${DCOL[k]}"></i>${k} ${n2(w.h[DKEY[k]])} h</span>`).join("")}</div>`:""}
+  </div></div>
+  <div class="days">${[0,1,2,3,4,5,6].map(dow=>{
+    const d = dayPlan((calWeek-1)*7+dow);
+    const isToday = d.date === todayISO(), isRace = w.isRace && dow===6;
+    const logged = S.sessions.filter(s=>s.date===d.date);
+    const lm = logged.reduce((s,x)=>s+(+x.min||0),0);
+    return `<div class="day ${isToday?"today":""} ${isRace?"raceday":""}" data-idx="${d.idx}">
+      <div class="dh"><b>${DAYS_S[dow]}</b><span class="dim" style="font-size:11px">${fmtD(d.date)}</span>
+        <span class="dt">${isToday?"oggi":""}</span></div>
+      ${isRace?`<div class="sess"><div class="top">${chip("Brick")}</div><div class="work"><b>GARA — ${esc(w.gradino)}</b></div></div>`:""}
+      ${d.sess.length ? d.sess.map((s,k)=>`<div class="sess">
+        <div class="top">${chip(s.disc)}<span class="mins"><input type="number" data-slot="${k}" min="0" step="5"
+          value="${s.min}" style="width:56px;text-align:right;padding:1px 4px;font-size:11.5px"> ′</span></div>
+        <div class="work">${esc(s.tipo)} — ${esc(s.work)}</div>
+        <div class="tss">${s.tss} rTSS · ${DOM_LABEL[s.dom]||s.dom}${s.costo?` · ${s.costo}`:""} ${s.min>0?`· <a href="#" data-log="${k}" style="color:var(--accent)">registra</a>`:""}</div>
+      </div>`).join("") : (isRace?"":`<div class="sess dim" style="font-size:11.5px">${w.seg==="blocco"?"riposo":"nessuna seduta prescritta"}</div>`)}
+      <div class="dayfoot"><span class="tot">${hm(d.total)}</span>
+        ${lm?`<span class="pill ${complianceClass(lm/(d.total||1))}">${hm(lm)} fatti</span>`:""}
+        <label class="chk"><input type="checkbox" data-done ${d.done?"checked":""}> fatto</label></div>
+    </div>`;}).join("")}</div>
+  <div class="panel" style="margin-top:20px"><header><h2>Note della settimana</h2></header>
+    <div class="body"><textarea id="wnote" rows="3" placeholder="Come è andata, cosa hai cambiato, come ti senti…">${esc(S.note[calWeek]||"")}</textarea></div></div>`;
+
+  $("#strip").querySelectorAll("button").forEach(b=>b.onclick=()=>{ calWeek=+b.dataset.w; render(); });
+  $("#prevW").onclick = ()=>{ calWeek = Math.max(1,calWeek-1); render(); };
+  $("#nextW").onclick = ()=>{ calWeek = Math.min(N,calWeek+1); render(); };
+  $("#todayW").onclick = ()=>{ calWeek = weekOfDate(todayISO()) || 1; render(); };
+  $("#wnote").onchange = e=>{ S.note[calWeek] = e.target.value; PLAN_CACHE.key = null; persist("config"); };
+  $("#view").querySelectorAll(".day").forEach(card=>{
+    const idx = +card.dataset.idx;
+    const ov = () => (S.cal[idx] = S.cal[idx] || {s:[], done:false, note:""});
+    card.querySelectorAll("input[data-slot]").forEach(inp=>{
+      inp.onchange = ()=>{ const o = ov(); o.s = o.s||[]; const k = +inp.dataset.slot;
+        o.s[k] = {...(o.s[k]||{}), min:Math.max(0,+inp.value||0)}; persist("calendar"); render(); };
+    });
+    card.querySelector("input[data-done]").onchange = e=>{ ov().done = e.target.checked; persist("calendar"); };
+    card.querySelectorAll("a[data-log]").forEach(a=>{ a.onclick = ev=>{ ev.preventDefault();
+      const d = dayPlan(idx), s = d.sess[+a.dataset.log];
+      S.sessions.push({id:uid(), date:d.date, disc:s.disc, tipo:s.tipo, min:s.min, rpe:5, feel:"Buona", note:s.work});
+      persist("sessions"); view = "diario"; render(); window.scrollTo(0,0); }; });
+  });
+}
+
+/* ---------------------------------------------------- DIARIO */
+const SESS_COLS = [
+  ["date","Data","date",118],["disc","Disciplina","sel",104],["tipo","Tipo sessione","sel",150],
+  ["min","Min","num",48],["dist","Dist. km/m","num",64],["hrAvg","FC med","num",54],
+  ["hrMax","FC max","num",54],["pw","W med","num",54],["np","NP","num",50],
+  ["pace","Passo s","num",56],["rpe","RPE","num",44]
+];
+function vDiario(){
+  const list = sortedSessions();
+  const tot = list.reduce((s,x)=>s+(+x.min||0),0), tss = list.reduce((s,x)=>s+sessionTSS(x),0);
+  $("#tbA").innerHTML = `<span class="pill mute">${list.length} sessioni · ${hm(tot)} · ${Math.round(tss)} TSS</span>
+    <button class="btn pri" id="addS">+ Nuova sessione</button>`;
+  $("#view").innerHTML = `
+  <p class="hint">Il TSS si calcola da solo: <b>bici</b> da NP e FTP, <b>corsa</b> dal passo soglia, <b>nuoto</b> dal CSS.
+  Per forza, camminata, tennis e sessioni senza dati usa l'RPE (ore × RPE² × 2 — 1 h a RPE 7 ≈ 98 TSS).
+  Scrivi il passo in secondi: al km per la corsa, ogni 100 m per il nuoto. Puoi sempre sovrascrivere il TSS col dato del tuo orologio.</p>
+  <div class="panel">${list.length ? `<div class="tw" style="max-height:74vh;overflow-y:auto"><table class="dense">
+    <thead><tr>${SESS_COLS.map(c=>`<th class="${c[2]==="num"?"num":""}">${c[1]}</th>`).join("")}
+      <th class="num">TSS</th><th>Sensaz.</th><th>Note</th><th></th></tr></thead>
+    <tbody>${list.map(s=>{
+      const auto = sessionTSS({...s, tssOverride:null});
+      return `<tr data-id="${s.id}">
+      ${SESS_COLS.map(([k,,t,wd])=>{
+        if (t==="date") return `<td><input type="date" data-k="${k}" value="${esc(s.date)}" style="width:${wd}px"></td>`;
+        if (t==="sel"){ const L = k==="disc"?DISC:(TIPI.includes(s[k])||!s[k]?TIPI:[s[k],...TIPI]);
+          return `<td><select data-k="${k}" style="width:${wd}px">${opts(L, s[k])}</select></td>`; }
+        return `<td class="num"><input type="number" data-k="${k}" value="${s[k]??""}" style="width:${wd}px"
+          step="${k==="dist"?"0.1":"1"}"></td>`;}).join("")}
+      <td class="num"><input type="number" data-k="tssOverride" value="${s.tssOverride ?? auto}"
+        title="Calcolato: ${auto}. Sovrascrivi col dato del tuo orologio se ce l'hai."
+        style="width:54px;font-weight:600"></td>
+      <td><select data-k="feel" style="width:88px"><option value=""></option>${opts(FEEL,s.feel)}</select></td>
+      <td><input data-k="note" value="${esc(s.note)}" style="min-width:150px"></td>
+      <td><button class="btn sm danger" data-del="${s.id}" title="Elimina">✕</button></td></tr>`;}).join("")}
+    </tbody></table></div>` : `<div class="empty">Nessuna sessione registrata.<br>
+      Aggiungine una qui sopra, oppure aprila dal Calendario con «registra» sotto una seduta pianificata.</div>`}
+  </div>`;
+  $("#addS").onclick = ()=>{ S.sessions.push({id:uid(), date:todayISO(), disc:"Bici", tipo:"Aerobico base",
+    min:60, rpe:5, feel:"Buona", note:""}); persist("sessions"); render(); };
+  $("#view").querySelectorAll("tr[data-id]").forEach(tr=>{
+    const s = S.sessions.find(x=>x.id===tr.dataset.id);
+    tr.querySelectorAll("[data-k]").forEach(inp=>{ inp.onchange = ()=>{
+      const k = inp.dataset.k, v = inp.value;
+      s[k] = (inp.type==="number") ? (v===""?null:+v) : v;
+      if (k==="tssOverride" && s.tssOverride === sessionTSS({...s, tssOverride:null})) s.tssOverride = null;
+      persist("sessions"); render(); }; });
+    tr.querySelector("[data-del]").onclick = ()=>{ S.sessions = S.sessions.filter(x=>x.id!==s.id);
+      persist("sessions"); render(); };
+  });
+}
+
+/* ---------------------------------------------------- CORPO */
+function vCorpo(){
+  const N = Math.max(1, NW()); calWeek = Math.max(1,Math.min(N,calWeek||weekOfDate(todayISO())||1));
+  const w = weeks()[calWeek-1] || {from:startDate(), to:addDays(startDate(),6), periodo:"—"};
+  const F = [["peso","Peso","kg",.1],["fcRip","FC riposo","bpm",1],["hrv","HRV","ms",1],
+    ["sonno","Sonno","h",.5],["qSonno","Qualità sonno","1-5",1],["stress","Stress","1-5",1],
+    ["fatica","Fatica","1-5",1],["motiv","Motivazione","1-5",1]];
+  const rows = [0,1,2,3,4,5,6].map(k=>addDays(w.from,k));
+  const has = Object.keys(S.body).length;
+  const avg = key => { const v = Object.values(S.body).map(b=>+b[key]).filter(x=>x>0);
+    return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; };
+  $("#tbA").innerHTML = `<button class="btn sm" id="prevW">‹</button>
+    <span class="pill mute">Settimana ${calWeek}</span><button class="btn sm" id="nextW">›</button>`;
+  $("#view").innerHTML = `
+  <p class="hint">Rilevazione al risveglio. Il singolo dato non dice quasi nulla: quello che conta è il trend su 7-10 giorni.
+  FC a riposo in salita, HRV in calo e sonno scarso nello stesso periodo sono il segnale per togliere carico, non per aggiungerne
+  (famiglia OV della dottrina).</p>
+  ${has?`<div class="stats g4">${F.slice(0,4).map(([k,lab,u])=>{const a=avg(k);
+    return `<div class="stat"><div class="lab">${lab} — media</div>
+      <div class="val">${a?n1(a):"—"}<small> ${u}</small></div>
+      <div class="sub">su ${Object.values(S.body).filter(b=>+b[k]>0).length} rilevazioni</div></div>`;}).join("")}</div>`:""}
+  <div class="panel"><header><h2>Settimana ${calWeek} · ${esc(w.gradino || w.periodo)}</h2>
+    <span class="note">${fmtFull(w.from)} – ${fmtFull(w.to)}</span></header>
+  <div class="tw"><table><thead><tr><th>Giorno</th>
+    ${F.map(f=>`<th class="num">${f[1]}<br><span style="font-weight:400;text-transform:none;letter-spacing:0">${f[2]}</span></th>`).join("")}
+    <th style="min-width:260px">Note</th></tr></thead><tbody>
+    ${rows.map((d,i)=>{ const b = S.body[d]||{};
+      return `<tr data-d="${d}"><td><b>${DAYS_S[i]}</b> <span class="dim mono">${fmtD(d)}</span></td>
+      ${F.map(([k,,,st])=>`<td class="num"><input type="number" step="${st}" data-k="${k}" value="${b[k]??""}" style="width:66px"></td>`).join("")}
+      <td><input data-k="note" value="${esc(b.note||"")}"></td></tr>`;}).join("")}
+  </tbody></table></div></div>`;
+  $("#prevW").onclick = ()=>{ calWeek=Math.max(1,calWeek-1); render(); };
+  $("#nextW").onclick = ()=>{ calWeek=Math.min(N,calWeek+1); render(); };
+  $("#view").querySelectorAll("tr[data-d]").forEach(tr=>{
+    const d = tr.dataset.d;
+    tr.querySelectorAll("[data-k]").forEach(inp=>{ inp.onchange = ()=>{
+      const b = S.body[d] = S.body[d] || {};
+      const v = inp.value; b[inp.dataset.k] = inp.type==="number" ? (v===""?null:+v) : v;
+      persist("body"); }; });
+  });
+}
+
+/* ---------------------------------------------------- TEST */
+function vTest(){
+  const list = S.tests.slice().sort((a,b)=>a.date<b.date?1:-1);
+  const TT = ["FTP bici — test 20'","FTP bici — rampa","Soglia corsa — test 30'","CSS nuoto — 400/200 m",
+    "VO2max","Peso e composizione","FC massima","Altro"];
+  $("#tbA").innerHTML = `<button class="btn pri" id="addT">+ Nuovo test</button>`;
+  $("#view").innerHTML = `
+  <p class="hint">Ogni volta che rifai un test, registralo qui e poi aggiorna il valore corrispondente nel Setup:
+  zone e TSS si riallineano subito (S1–S6: le soglie si misurano, non si stimano a lungo).</p>
+  <div class="panel">${list.length?`<div class="tw"><table><thead><tr><th>Data</th><th>Test</th>
+    <th class="num">Risultato</th><th>Unità</th><th class="num">FC media</th><th class="num">FC max</th>
+    <th style="min-width:300px">Note e condizioni</th><th></th></tr></thead><tbody>
+    ${list.map(t=>`<tr data-id="${t.id}">
+      <td><input type="date" data-k="date" value="${esc(t.date)}" style="width:130px"></td>
+      <td><select data-k="tipo" style="width:210px">${opts(TT,t.tipo)}</select></td>
+      <td class="num"><input type="number" step="0.1" data-k="val" value="${t.val??""}" style="width:80px"></td>
+      <td><input data-k="unit" value="${esc(t.unit||"")}" style="width:70px"></td>
+      <td class="num"><input type="number" data-k="hrAvg" value="${t.hrAvg??""}" style="width:66px"></td>
+      <td class="num"><input type="number" data-k="hrMax" value="${t.hrMax??""}" style="width:66px"></td>
+      <td><input data-k="note" value="${esc(t.note||"")}"></td>
+      <td><button class="btn sm danger" data-del title="Elimina">✕</button></td></tr>`).join("")}
+  </tbody></table></div>`:`<div class="empty">Nessun test registrato.</div>`}</div>`;
+  $("#addT").onclick = ()=>{ S.tests.push({id:uid(), date:todayISO(), tipo:"FTP bici — test 20'",
+    val:null, unit:"W", note:""}); persist("tests"); render(); };
+  $("#view").querySelectorAll("tr[data-id]").forEach(tr=>{
+    const t = S.tests.find(x=>x.id===tr.dataset.id);
+    tr.querySelectorAll("[data-k]").forEach(inp=>{ inp.onchange = ()=>{ const v = inp.value;
+      t[inp.dataset.k] = inp.type==="number" ? (v===""?null:+v) : v; persist("tests"); }; });
+    tr.querySelector("[data-del]").onclick = ()=>{ S.tests = S.tests.filter(x=>x.id!==t.id);
+      persist("tests"); render(); };
+  });
+}
+</script>
+<script>
+"use strict";
+const RAMP = ["#b7d3f6","#9ec5f4","#6da7ec","#3987e5","#256abf","#184f95","#0d366b"];
+/* ---------------------------------------------------- ZONE */
+function vZone(){
+  const st = S.setup;
+  const table = (title, sub, head, rows) => `
+    <div class="panel"><header><h2>${title}</h2><span class="note">${sub}</span></header>
+    <div class="tw"><table><thead><tr><th style="width:52px">Zona</th><th>Nome</th>
+      ${head.map(h=>`<th class="num">${h}</th>`).join("")}<th style="min-width:280px">Uso</th>
+      <th style="width:90px">% soglia</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  const zrow = (i,z,name,cells,use,pctTxt) => `<tr>
+    <td><span class="dc"><i style="background:${RAMP[i]};border-radius:2px"></i><b>${z}</b></span></td>
+    <td>${name}</td>${cells.map(c=>`<td class="num mono">${c}</td>`).join("")}
+    <td class="dim">${use}</td><td class="dim mono" style="font-size:11px">${pctTxt}</td></tr>`;
+  $("#view").innerHTML = `
+  <p class="hint">Tutte le zone derivano dalle soglie che hai inserito nel Setup — FTP ${st.ftp} W,
+  passo soglia ${mmss(st.thrPace)}/km, CSS ${mmss(st.css)}/100 m, FC soglia ${st.lthrBike} (bici) e ${st.lthrRun} (corsa).
+  Cambia una soglia lì e queste tabelle si riscrivono. Modello: potenza Coggan, FC e passo Friel, nuoto CSS.</p>
+  ${table("Bici — potenza","in watt, sulla base dell'FTP",["Da","A"],
+    ZONES.bikePw.map(([z,n,lo,hi,use],i)=>zrow(i,z,n,[Math.round(st.ftp*lo),Math.round(st.ftp*hi)],use,
+      `${Math.round(lo*100)}–${Math.round(hi*100)}% FTP`)).join(""))}
+  ${table("Bici — frequenza cardiaca","in bpm, sulla base della FC soglia in bici",["Da","A"],
+    ZONES.hr.map(([z,n,lo,hi],i)=>zrow(i,z,n,[Math.round(st.lthrBike*lo),Math.round(st.lthrBike*hi)],
+      "bpm", `${Math.round(lo*100)}–${Math.round(hi*100)}% LTHR`)).join(""))}
+  ${table("Corsa — passo","min/km, sulla base del passo soglia",["Più lento","Più veloce"],
+    ZONES.runPace.map(([z,n,lo,hi,use],i)=>zrow(i,z,n,[mmss(st.thrPace*hi),mmss(st.thrPace*lo)],use,
+      `${Math.round(lo*100)}–${Math.round(hi*100)}% del passo`)).join(""))}
+  ${table("Corsa — frequenza cardiaca","in bpm, sulla base della FC soglia in corsa",["Da","A"],
+    ZONES.hrRun.map(([z,n,lo,hi],i)=>zrow(i,z,n,[Math.round(st.lthrRun*lo),Math.round(st.lthrRun*hi)],
+      "bpm", `${Math.round(lo*100)}–${Math.round(hi*100)}% LTHR`)).join(""))}
+  ${table("Nuoto — passo","min/100 m, sulla base del CSS",["Più lento","Più veloce"],
+    ZONES.swim.map(([z,n,lo,hi],i)=>zrow(i,z,n,[mmss(st.css+hi),mmss(st.css+lo)],
+      z==="Z4"?"Passo CSS. Ritmo gara Ironman ≈ CSS +4/+8″":"", `CSS ${lo>0?"+":""}${lo}″ / ${hi>0?"+":""}${hi}″`)).join(""))}`;
+}
+
+/* ---------------------------------------------------- SETUP */
+function vSetup(){
+  const st = S.setup, p = piano();
+  const f = (k,lab,unit,step,extra) => `<label class="fld">${lab} <span class="u">${unit||""}</span>
+    <input data-s="${k}" type="number" step="${step||1}" value="${st[k]}">${extra?`<span class="u">${extra}</span>`:""}</label>`;
+  $("#tbA").innerHTML = `<button class="btn danger" id="reset">Ripristina i valori di partenza</button>`;
+  $("#view").innerHTML = bannerPiano() + `
+  <p class="hint">Sei numeri decidono il piano: quale gradino hai già fatto, quante settimane mancano alla gara (dalla data),
+  quante ore puoi dedicare e se sono un tetto rigido, quante ne fai oggi. Il motore applica la dottrina e dice
+  fin dove si arriva. Le soglie tarano zone e TSS del diario.</p>
+
+  <div class="panel"><header><h2>Atleta e obiettivo</h2>
+    <span class="spacer"></span>${p.scala?`<span class="pill ${p.scala.raggiunge_obiettivo?"ok":"warn"}">arrivo: ${esc(p.scala.arrivo)} · ${esc(p.scala.vincolo)}</span>`:""}</header>
+    <div class="body grid g4">
+    <label class="fld">Nome<input data-s="atleta" type="text" value="${esc(st.atleta)}"></label>
+    <label class="fld">Data della gara <span class="u">settimana ${settimaneAllaGara()} dal lunedì ${fmtFull(startDate())}</span>
+      <input data-s="raceDate" type="date" value="${esc(st.raceDate)}"></label>
+    <label class="fld">Gradino già completato<select data-s="gradinoFatto"><option value="" ${st.gradinoFatto?"":"selected"}>nessuno — da zero</option>${opts(GRADINI, st.gradinoFatto)}</select></label>
+    <label class="fld">Obiettivo<select data-s="obiettivo">${opts(GRADINI, st.obiettivo)}</select></label>
+    ${f("oreDisponibili","Ore settimanali disponibili","h",.5)}
+    <label class="fld">Le ore sono un tetto rigido? <span class="u">se no, sono un fabbisogno che può crescere</span>
+      <span><input data-s="tettoRigido" type="checkbox" ${st.tettoRigido?"checked":""}> tetto rigido (A3)</span></label>
+    ${f("oreOggi","Ore settimanali oggi","h",.5)}
+    ${f("ctl0","CTL iniziale","fitness di partenza",1)}
+  </div></div>
+
+  <div class="panel"><header><h2>Soglie</h2><span class="note">aggiornale dopo ogni test</span></header>
+    <div class="body grid g4">
+    ${f("ftp","FTP bici","W",1)}
+    ${f("lthrBike","FC soglia bici","bpm",1)}
+    ${f("thrPace","Passo soglia corsa","secondi al km",1,mmss(st.thrPace)+" /km")}
+    ${f("lthrRun","FC soglia corsa","bpm",1)}
+    ${f("css","CSS nuoto","secondi ogni 100 m",1,mmss(st.css)+" /100 m")}
+    ${f("hrMax","FC massima","bpm",1)}
+    ${f("hrRest","FC a riposo","bpm",1)}
+    ${f("peso","Peso","kg",.1,n2(st.ftp/st.peso)+" W/kg alla soglia")}
+  </div></div>
+
+  <div class="panel"><header><h2>Librerie</h2><span class="note">dati, non regole — dal database Supabase «Triathlon Engine»</span>
+    <span class="spacer"></span><button class="btn sm" id="reloadLib2" ${mcpRef?"":"disabled"}>Ricarica da Supabase</button></header>
+    <div class="body" style="font-size:12.5px;color:var(--ink-2)">
+      Stato: <b>${esc(libStato)}</b>${libErrore?` — ${esc(libErrore)}`:""}.
+      ${LIB.varianti?` ${LIB.varianti.length} varianti e ${LIB.workouts.length} workout di forza, caricati il ${esc((LIB.loadedAt||"").slice(0,16).replace("T"," "))} (${esc(LIB.fonte||"cache")}).`:""}
+      ${mcpRef?"":" Il connettore Supabase non è disponibile in questa vista: le librerie restano quelle in cache del browser."}
+    </div></div>
+
+  <div class="panel"><header><h2>Come si calcola il TSS</h2></header><div class="body">
+    <div class="grid g2" style="font-size:12.5px;color:var(--ink-2)">
+      <div><b style="color:var(--ink)">Con i dati</b>
+        <ul style="margin:6px 0 0;padding-left:18px;line-height:1.7">
+        <li>Bici — ore × (NP / FTP)² × 100</li>
+        <li>Corsa — ore × (passo soglia / passo medio)² × 100</li>
+        <li>Nuoto — ore × (CSS / passo medio 100 m)² × 100</li></ul></div>
+      <div><b style="color:var(--ink)">Senza dati</b>
+        <p style="margin:6px 0 0;line-height:1.6">Forza, camminata, tennis e ogni sessione senza potenza o passo:
+        <b>ore × RPE² × 2</b>. Un'ora a RPE 7 vale circa 98 TSS. Il piano, invece, usa il rTSS della libreria.</p></div>
+    </div></div></div>`;
+
+  $("#view").querySelectorAll("[data-s]").forEach(inp=>{ inp.onchange = ()=>{
+    const k = inp.dataset.s;
+    st[k] = inp.type==="number" ? (+inp.value||0) : inp.type==="checkbox" ? inp.checked : inp.value;
+    persist("config"); render(); }; });
+  const rl = $("#reloadLib2"); if (rl) rl.onclick = async()=>{ await caricaLibrerie(true); render(); };
+  $("#reset").onclick = ()=>{ S.setup = {...SETUP0}; S.note = {}; S.cal = {}; persist("config"); persist("calendar"); render(); };
+}
+boot();
+</script>
