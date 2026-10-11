@@ -74,23 +74,40 @@ async function sql(query){
     {cache:{staleTime:300000}});
   return parseSupabase(r.payload);
 }
+/* Fuori da claude.ai (pagina statica) le librerie si leggono via REST con la chiave
+   pubblica: le quattro tabelle hanno RLS con sola lettura pubblica. Dentro claude.ai
+   gli host esterni sono bloccati e si passa dal connettore (mcp). */
+const REST = Object.assign({ url:"https://yzuyikzrtobjuijngjmc.supabase.co",
+  // chiave pubblica (ruolo anon): puo' solo leggere le librerie, la RLS fa il resto
+  key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6dXlpa3pydG9ianVpam5nam1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MzAzNjAsImV4cCI6MjEwNzIwNjM2MH0.cAwKvxxIpXTeOiEajCeZtKkQOuL2HHuyUGKjvepZtro" }, window.IRONMAN_REST || {});
+const inClaude = () => !!(window.claude && window.claude.use);
+async function rest(path){
+  const r = await fetch(`${REST.url}/rest/v1/${path}`, {headers:{apikey:REST.key, Authorization:`Bearer ${REST.key}`}});
+  if (!r.ok) throw new Error(`REST ${r.status} su ${path.split("?")[0]}`);
+  return r.json();
+}
 async function caricaLibrerie(force){
   if (!force){
     try{ const raw = localStorage.getItem(LIB_LS); if (raw){ const o = JSON.parse(raw);
       if (o.varianti && o.workouts){ LIB = o; libStato = "in cache"; return true; } } }catch(e){}
   }
-  if (!mcpRef){ libStato = "connettore non disponibile"; return false; }
+  const viaRest = !inClaude();
+  if (!viaRest && !mcpRef){ libStato = "connettore non disponibile"; return false; }
   libStato = "caricamento…"; libErrore = ""; render();
   try{
-    const workouts = await sql("select cod,nome,bersaglio,fasi,n_esercizi,minuti,famiglia,zona,nm,fatica,doms,collocazione,n_nuoto,b_bici,c_corsa,ordine from workout_forza order by ordine, cod");
-    const PAGE = 1500, varianti = [];
+    const COLS_W = "cod,nome,bersaglio,fasi,n_esercizi,minuti,famiglia,zona,nm,fatica,doms,collocazione,n_nuoto,b_bici,c_corsa,ordine";
+    const COLS_V = "cod,base,arch,disc,ob_libro,zona,ob,dist,tempo,edw,ban,rtss";
+    const workouts = viaRest ? await rest(`workout_forza?select=${COLS_W}&order=ordine.asc,cod.asc`)
+      : await sql(`select ${COLS_W} from workout_forza order by ordine, cod`);
+    const PAGE = 1000, varianti = [];   // PostgREST non restituisce piu' di 1000 righe per chiamata
     for (let off = 0; ; off += PAGE){
-      const p = await sql(`select cod,base,arch,disc,ob_libro,zona,ob,dist,tempo,edw,ban,rtss from variante order by cod limit ${PAGE} offset ${off}`);
+      const p = viaRest ? await rest(`variante?select=${COLS_V}&order=cod.asc&limit=${PAGE}&offset=${off}`)
+        : await sql(`select ${COLS_V} from variante order by cod limit ${PAGE} offset ${off}`);
       varianti.push(...p);
       libStato = `caricamento… ${varianti.length} varianti`; render();
       if (p.length < PAGE) break;
     }
-    LIB = { varianti, workouts, loadedAt: new Date().toISOString(), fonte:"Supabase" };
+    LIB = { varianti, workouts, loadedAt: new Date().toISOString(), fonte: viaRest ? "Supabase REST" : "Supabase (connettore)" };
     try{ localStorage.setItem(LIB_LS, JSON.stringify(LIB)); }catch(e){}
     libStato = "caricate"; return true;
   }catch(e){
@@ -339,7 +356,7 @@ function bannerPiano(){
   if (p.weeks) return "";
   const lib = !LIB.varianti ? `<b>Librerie:</b> ${esc(libStato)}${libErrore?` — ${esc(libErrore)}`:""}` : "";
   return `<div class="demo-bar"><span>Il piano non può essere generato: ${esc(p.errore||"")}. ${lib}</span>
-    <span class="spacer"></span>${!LIB.varianti && mcpRef?`<button class="btn sm" id="reloadLib">Carica le librerie</button>`:""}</div>`;
+    <span class="spacer"></span>${!LIB.varianti && (mcpRef||!inClaude())?`<button class="btn sm" id="reloadLib">Carica le librerie</button>`:""}</div>`;
 }
 function wireBanner(){ const b = document.getElementById("reloadLib"); if (b) b.onclick = async()=>{ await caricaLibrerie(true); render(); }; }
 function render(){

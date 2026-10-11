@@ -457,11 +457,11 @@ function vSetup(){
   </div></div>
 
   <div class="panel"><header><h2>Librerie</h2><span class="note">dati, non regole — dal database Supabase «Triathlon Engine»</span>
-    <span class="spacer"></span><button class="btn sm" id="reloadLib2" ${mcpRef?"":"disabled"}>Ricarica da Supabase</button></header>
+    <span class="spacer"></span><button class="btn sm" id="reloadLib2" ${(mcpRef||!inClaude())?"":"disabled"}>Ricarica da Supabase</button></header>
     <div class="body" style="font-size:12.5px;color:var(--ink-2)">
       Stato: <b>${esc(libStato)}</b>${libErrore?` — ${esc(libErrore)}`:""}.
       ${LIB.varianti?` ${LIB.varianti.length} varianti e ${LIB.workouts.length} workout di forza, caricati il ${esc((LIB.loadedAt||"").slice(0,16).replace("T"," "))} (${esc(LIB.fonte||"cache")}).`:""}
-      ${mcpRef?"":" Il connettore Supabase non è disponibile in questa vista: le librerie restano quelle in cache del browser."}
+      ${(mcpRef||!inClaude())?"":" Il connettore Supabase non è disponibile in questa vista: le librerie restano quelle in cache del browser."}
     </div></div>
 
   <div class="panel"><header><h2>Come si calcola il TSS</h2></header><div class="body">
