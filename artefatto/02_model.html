@@ -46,7 +46,7 @@ const n1 = v => (Math.round(v*10)/10).toFixed(1);
 const n2 = v => (Math.round(v*100)/100).toFixed(2);
 const pct = v => isFinite(v) ? Math.round(v*100)+"%" : "—";
 const nf = v => Math.round(v).toLocaleString("it-IT");
-const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x"?r:(r&3|8)).toString(16); }));
 
 /* ===================== state ===================== */
 const SETUP0 = {
@@ -268,6 +268,7 @@ function setSave(mode,txt){ const d = document.getElementById("saveDot");
 function persist(part){
   pendingParts.add(part);
   try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){}
+  if (typeof SB !== "undefined" && SB.attivo()){ SB.persist(part); return; }
   if (!dbRef){ setSave("", "salvato su questo browser"); return; }
   setSave("pending","salvataggio…");
   clearTimeout(saveTimer);
@@ -298,6 +299,7 @@ async function boot(){
   ]);
   mcpRef = mcp;
   if (!LIB.varianti){ await caricaLibrerie(true); render(); }
+  if (!inClaude()){ await SB.avvia(); return; }   // pagina pubblica: i dati vivono su Supabase, con login
   if (!db){ setSave("", "salvato su questo browser"); return; }
   dbRef = db;
   try{

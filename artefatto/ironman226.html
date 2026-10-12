@@ -294,7 +294,7 @@ const n1 = v => (Math.round(v*10)/10).toFixed(1);
 const n2 = v => (Math.round(v*100)/100).toFixed(2);
 const pct = v => isFinite(v) ? Math.round(v*100)+"%" : "—";
 const nf = v => Math.round(v).toLocaleString("it-IT");
-const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x"?r:(r&3|8)).toString(16); }));
 
 /* ===================== state ===================== */
 const SETUP0 = {
@@ -516,6 +516,7 @@ function setSave(mode,txt){ const d = document.getElementById("saveDot");
 function persist(part){
   pendingParts.add(part);
   try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){}
+  if (typeof SB !== "undefined" && SB.attivo()){ SB.persist(part); return; }
   if (!dbRef){ setSave("", "salvato su questo browser"); return; }
   setSave("pending","salvataggio…");
   clearTimeout(saveTimer);
@@ -546,6 +547,7 @@ async function boot(){
   ]);
   mcpRef = mcp;
   if (!LIB.varianti){ await caricaLibrerie(true); render(); }
+  if (!inClaude()){ await SB.avvia(); return; }   // pagina pubblica: i dati vivono su Supabase, con login
   if (!db){ setSave("", "salvato su questo browser"); return; }
   dbRef = db;
   try{
@@ -616,6 +618,241 @@ function render(){
     corpo:vCorpo, test:vTest, zone:vZone, setup:vSetup})[view]();
   wireBanner();
 }
+</script>
+<script>
+"use strict";
+/* ===================== Supabase: utente e dati dell'atleta =====================
+   Vale per la pagina pubblica (fuori da claude.ai). L'atleta accede con email e
+   password (Supabase Auth); i suoi dati stanno nelle tabelle del contratto C1–C8 e
+   ogni tabella è leggibile e scrivibile solo da lui (policy RLS, migrazione 06).
+   La pagina continua a tenere lo stato in S; questo strato lo carica dal database al
+   login e lo sincronizza per differenza a ogni modifica. Senza login i dati restano
+   nel browser, come prima. */
+const SB = (() => {
+  const SESS_LS = "ironman226.auth.v1";
+  const PLAN_KEYS = ["gradinoFatto","obiettivo","oreDisponibili","tettoRigido","oreOggi","raceDate","ctl0"];
+  const PROFILO_KEYS = ["hrMax","hrRest","peso"];
+  // chiave del Setup -> riga di `soglia` (disciplina, tipo, unità)
+  const SOGLIE = { ftp:["Ciclismo","FTP","W"], lthrBike:["Ciclismo","LT2","bpm"], thrPace:["Corsa","LT2","s/km"],
+    lthrRun:["Corsa","LT2","bpm"], css:["Nuoto","CSS","s/100m"] };
+  const GRADINO_DB = {"Triathlon Sprint":"Sprint","Triathlon Olimpico":"Olimpico","Half-Ironman":"Half","Ironman":"Ironman"};
+  const DISC_DB = {Nuoto:"Nuoto", Bici:"Ciclismo", Corsa:"Corsa", Forza:"Forza", Bodyweight:"Forza", Brick:"Brick", Altro:"Altro", Riposo:"Altro"};
+  const DISC_DA_DB = {Nuoto:"Nuoto", Ciclismo:"Bici", Corsa:"Corsa", Forza:"Forza", Brick:"Brick", Altro:"Altro"};
+  const PRESCR_DISC = {"Nuoto":"Nuoto","Ciclismo":"Ciclismo","Corsa a piedi":"Corsa","Forza":"Forza"};
+
+  let sess = null, atleta = null, errore = "", stato = "non connesso";
+  const shadow = { sessions:{}, tests:{}, body:{}, note:"", cal:"", versione:null, soglie:{}, profilo:"" };
+  const attivo = () => !!(sess && atleta);
+  const oggi = () => todayISO();
+  const nz = (v) => (v === "" || v === undefined || Number.isNaN(v)) ? null : v;
+  const num = (v) => (v === null || v === undefined || v === "") ? null : +v;
+  const inRange = (v, lo, hi) => { const n = num(v); return n === null ? null : Math.min(hi, Math.max(lo, Math.round(n))); };
+
+  /* ---------- autenticazione (GoTrue via REST) ---------- */
+  async function authPost(path, body){
+    const r = await fetch(`${REST.url}/auth/v1/${path}`, {method:"POST", headers:{apikey:REST.key, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(j.error_description || j.msg || j.message || j.error || `errore ${r.status}`);
+    return j;
+  }
+  function setSess(j){
+    sess = { access_token:j.access_token, refresh_token:j.refresh_token,
+      expires_at: Math.floor(Date.now()/1000) + (j.expires_in || 3600), user:{id:j.user.id, email:j.user.email} };
+    try{ localStorage.setItem(SESS_LS, JSON.stringify(sess)); }catch(e){}
+  }
+  async function token(){
+    if (!sess) throw new Error("non connesso");
+    if (sess.expires_at - Date.now()/1000 < 60){
+      try{ setSess(await authPost("token?grant_type=refresh_token", {refresh_token:sess.refresh_token})); }
+      catch(e){ await logout(); throw new Error("sessione scaduta, accedi di nuovo"); }
+    }
+    return sess.access_token;
+  }
+  async function login(email, password){
+    errore = ""; setSess(await authPost("token?grant_type=password", {email, password}));
+    await dopoLogin();
+  }
+  async function registra(email, password){
+    errore = "";
+    const j = await authPost("signup", {email, password});
+    if (j.access_token){ setSess(j); await dopoLogin(); return "accesso effettuato"; }
+    return "registrazione ricevuta: conferma l'indirizzo dalla mail che ti è arrivata, poi accedi";
+  }
+  async function logout(){
+    sess = null; atleta = null; stato = "non connesso";
+    try{ localStorage.removeItem(SESS_LS); }catch(e){}
+    setSave("off", "non connesso · salvato su questo browser");
+  }
+
+  /* ---------- REST con il token dell'utente ---------- */
+  async function q(method, path, body, prefer){
+    const t = await token();
+    const headers = {apikey:REST.key, Authorization:`Bearer ${t}`, "Content-Type":"application/json"};
+    if (prefer) headers.Prefer = prefer; else if (method !== "GET") headers.Prefer = "return=representation";
+    const r = await fetch(`${REST.url}/rest/v1/${path}`, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
+    if (!r.ok){ const txt = await r.text().catch(()=>""); throw new Error(`${method} ${path.split("?")[0]}: ${r.status} ${txt.slice(0,160)}`); }
+    if (r.status === 204) return null;
+    const ct = r.headers.get("content-type") || "";
+    return ct.includes("json") ? r.json() : null;
+  }
+
+  /* ---------- mappature S <-> tabelle ---------- */
+  const aSeduta = (s) => ({ id:s.id, atleta_id:atleta.id, data:s.date, disciplina:DISC_DB[s.disc] || "Altro",
+    tipo: nz(s.tipo) || (s.disc === "Riposo" ? "Riposo" : s.disc === "Bodyweight" ? "Bodyweight" : null),
+    durata_min: Math.max(0, Math.round(+s.min || 0)),
+    distanza_m: num(s.dist) === null ? null : (s.disc === "Nuoto" ? num(s.dist) : num(s.dist) * 1000),
+    passo_s: num(s.pace), potenza_w: num(s.np), potenza_media_w: num(s.pw), fc_media: inRange(s.hrAvg, 0, 300), fc_max: inRange(s.hrMax, 0, 300),
+    rpe: inRange(s.rpe, 0, 10), carico: sessionTSS(s), carico_dichiarato: s.tssOverride !== null && s.tssOverride !== undefined && s.tssOverride !== "",
+    fonte:"atleta", sensazione: nz(s.feel) || null, note: nz(s.note) || null });
+  const daSeduta = (r) => ({ id:r.id, date:r.data, disc: DISC_DA_DB[r.disciplina] || "Altro", tipo:r.tipo || "",
+    min:r.durata_min, dist: r.distanza_m === null ? null : (r.disciplina === "Nuoto" ? +r.distanza_m : +r.distanza_m / 1000),
+    pace: num(r.passo_s), np: num(r.potenza_w), pw: num(r.potenza_media_w), hrAvg: r.fc_media, hrMax: r.fc_max, rpe: r.rpe,
+    tssOverride: r.carico_dichiarato ? +r.carico : null, feel: r.sensazione || "", note: r.note || "" });
+  const discTest = (tipo) => /bici/i.test(tipo) ? "Ciclismo" : /corsa/i.test(tipo) ? "Corsa" : /nuoto/i.test(tipo) ? "Nuoto" : "Generale";
+  const aTest = (t) => ({ id:t.id, atleta_id:atleta.id, data:t.date, disciplina:discTest(t.tipo || ""), protocollo:t.tipo || "Altro",
+    risultato:{ val:num(t.val), unit:t.unit || null, hrAvg:num(t.hrAvg), hrMax:num(t.hrMax) }, note: nz(t.note) || null });
+  const daTest = (r) => ({ id:r.id, date:r.data, tipo:r.protocollo, val:(r.risultato||{}).val ?? null, unit:(r.risultato||{}).unit || "",
+    hrAvg:(r.risultato||{}).hrAvg ?? null, hrMax:(r.risultato||{}).hrMax ?? null, note:r.note || "" });
+  const aBen = (d, b) => ({ atleta_id:atleta.id, data:d, sonno:inRange(b.qSonno,1,7), fatica:inRange(b.fatica,1,7), stress:inRange(b.stress,1,7),
+    peso:num(b.peso), fc_riposo:inRange(b.fcRip,0,250), hrv:inRange(b.hrv,0,500), sonno_ore:num(b.sonno), motivazione:inRange(b.motiv,1,7), note: nz(b.note) || null });
+  const daBen = (r) => ({ qSonno:r.sonno, fatica:r.fatica, stress:r.stress, peso:num(r.peso), fcRip:r.fc_riposo, hrv:r.hrv, sonno:num(r.sonno_ore), motiv:r.motivazione, note:r.note || "" });
+  const profilo = () => ({ hrMax:S.setup.hrMax, hrRest:S.setup.hrRest, peso:S.setup.peso });
+  const parametri = () => Object.fromEntries(PLAN_KEYS.map(k => [k, S.setup[k]]));
+
+  /* ---------- caricamento al login ---------- */
+  async function dopoLogin(){
+    const locale = JSON.parse(JSON.stringify({sessions:S.sessions, tests:S.tests, body:S.body, note:S.note, cal:S.cal}));
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    [...locale.sessions, ...locale.tests].forEach(x => { if (!uuid.test(String(x.id))) x.id = uid(); });
+    await carica();
+    // prima volta con dati già nel browser: li si porta nel database
+    const daPortare = [];
+    if (!S.sessions.length && locale.sessions.length){ S.sessions = locale.sessions; daPortare.push("sessions"); }
+    if (!S.tests.length && locale.tests.length){ S.tests = locale.tests; daPortare.push("tests"); }
+    if (!Object.keys(S.body).length && Object.keys(locale.body).length){ S.body = locale.body; daPortare.push("body"); }
+    if (!Object.keys(S.note).length && Object.keys(locale.note).length) { S.note = locale.note; daPortare.push("config"); }
+    if (!Object.keys(S.cal).length && Object.keys(locale.cal).length) { S.cal = locale.cal; daPortare.push("calendar"); }
+    if (!shadow.versione) daPortare.push("config");
+    stato = "connesso"; PLAN_CACHE.key = null; render();
+    if (daPortare.length) daPortare.forEach(persist); else setSave("", `sincronizzato · ${sess.user.email}`);
+  }
+  async function carica(){
+    let rows = await q("GET", `atleta?select=id,nome,profilo&user_id=eq.${sess.user.id}`);
+    if (!rows.length) rows = await q("POST", "atleta", [{user_id:sess.user.id, nome:S.setup.atleta || "Atleta", profilo:profilo()}]);
+    atleta = rows[0]; const A = atleta.id;
+    if (atleta.nome) S.setup.atleta = atleta.nome;
+    if (atleta.profilo) for (const k of PROFILO_KEYS) if (atleta.profilo[k] != null) S.setup[k] = atleta.profilo[k];
+    shadow.profilo = JSON.stringify(profilo()) + atleta.nome;
+    const ver = await q("GET", `piano_versione?select=id,numero,parametri,obiettivo_id&atleta_id=eq.${A}&order=numero.desc&limit=1`);
+    shadow.versione = ver[0] || null;
+    if (ver[0] && ver[0].parametri) for (const k of PLAN_KEYS) if (ver[0].parametri[k] !== undefined) S.setup[k] = ver[0].parametri[k];
+    const sg = await q("GET", `soglia?select=disciplina,tipo,unita,valore&atleta_id=eq.${A}&order=creato_il.desc`);
+    shadow.soglie = {};
+    for (const r of sg){ const k = Object.keys(SOGLIE).find(k => SOGLIE[k].join("|") === `${r.disciplina}|${r.tipo}|${r.unita}`);
+      if (k && !(k in shadow.soglie)){ shadow.soglie[k] = +r.valore; S.setup[k] = +r.valore; } }
+    const se = await q("GET", `seduta_eseguita?select=*&atleta_id=eq.${A}&order=data.desc&limit=5000`);
+    S.sessions = se.map(daSeduta); shadow.sessions = Object.fromEntries(S.sessions.map(s => [s.id, JSON.stringify(s)]));
+    const te = await q("GET", `test?select=*&atleta_id=eq.${A}&order=data.desc`);
+    S.tests = te.map(daTest); shadow.tests = Object.fromEntries(S.tests.map(t => [t.id, JSON.stringify(t)]));
+    const be = await q("GET", `benessere?select=*&atleta_id=eq.${A}`);
+    S.body = {}; for (const r of be) S.body[r.data] = daBen(r);
+    shadow.body = Object.fromEntries(Object.entries(S.body).map(([d,b]) => [d, JSON.stringify(b)]));
+    const an = await q("GET", `annotazione?select=chiave,valore&atleta_id=eq.${A}`);
+    S.note = {}; S.cal = {};
+    for (const r of an){ if (r.chiave === "note") S.note = r.valore || {}; if (r.chiave === "cal") S.cal = r.valore || {}; }
+    shadow.note = JSON.stringify(S.note); shadow.cal = JSON.stringify(S.cal);
+  }
+
+  /* ---------- sincronizzazione per differenza ---------- */
+  async function syncLista(nome, tabella, lista, verso){
+    const sh = shadow[nome], visti = new Set();
+    for (const x of lista){
+      visti.add(x.id); const j = JSON.stringify(x);
+      if (!(x.id in sh)) await q("POST", tabella, [verso(x)]);
+      else if (sh[x.id] !== j){ const r = verso(x); delete r.id; delete r.atleta_id; await q("PATCH", `${tabella}?id=eq.${x.id}`, r, "return=minimal"); }
+      sh[x.id] = j;
+    }
+    for (const id of Object.keys(sh)) if (!visti.has(id)){ await q("DELETE", `${tabella}?id=eq.${id}`, undefined, "return=minimal"); delete sh[id]; }
+  }
+  const SYNC = {
+    sessions: () => syncLista("sessions", "seduta_eseguita", S.sessions, aSeduta),
+    tests: () => syncLista("tests", "test", S.tests, aTest),
+    body: async () => {
+      for (const [d, b] of Object.entries(S.body)){
+        const j = JSON.stringify(b); if (shadow.body[d] === j) continue;
+        await q("POST", "benessere?on_conflict=atleta_id,data", [aBen(d, b)], "resolution=merge-duplicates,return=minimal");
+        shadow.body[d] = j;
+      }
+    },
+    calendar: async () => {
+      const j = JSON.stringify(S.cal); if (j === shadow.cal) return;
+      await q("POST", "annotazione?on_conflict=atleta_id,chiave", [{atleta_id:atleta.id, chiave:"cal", valore:S.cal, aggiornata_il:new Date().toISOString()}], "resolution=merge-duplicates,return=minimal");
+      shadow.cal = j;
+    },
+    config: async () => {
+      const jn = JSON.stringify(S.note);
+      if (jn !== shadow.note){
+        await q("POST", "annotazione?on_conflict=atleta_id,chiave", [{atleta_id:atleta.id, chiave:"note", valore:S.note, aggiornata_il:new Date().toISOString()}], "resolution=merge-duplicates,return=minimal");
+        shadow.note = jn;
+      }
+      const jp = JSON.stringify(profilo()) + S.setup.atleta;
+      if (jp !== shadow.profilo){ await q("PATCH", `atleta?id=eq.${atleta.id}`, {nome:S.setup.atleta, profilo:profilo()}, "return=minimal"); shadow.profilo = jp; }
+      const nuove = Object.keys(SOGLIE).filter(k => +S.setup[k] !== shadow.soglie[k] && isFinite(+S.setup[k]));
+      if (nuove.length){
+        await q("POST", "soglia", nuove.map(k => { const [disciplina, tipo, unita] = SOGLIE[k];
+          return {atleta_id:atleta.id, disciplina, tipo, unita, valore:+S.setup[k], origine:"dichiarata", valida_da:oggi(), regola_id:"S1"}; }), "return=minimal");
+        nuove.forEach(k => shadow.soglie[k] = +S.setup[k]);
+      }
+      const jv = JSON.stringify(parametri());
+      if (!shadow.versione || JSON.stringify(shadow.versione.parametri || {}) !== jv) await nuovaVersione();
+    }
+  };
+  /* C2: una nuova versione del piano a ogni cambio dei parametri; il prescritto lo
+     scrive solo il motore (C1) e ogni versione porta la sua decisione (C5). */
+  async function nuovaVersione(){
+    const p = piano(); if (!p.weeks) return;
+    const A = atleta.id, gradino = GRADINO_DB[S.setup.obiettivo] || "Ironman", dataGara = S.setup.raceDate;
+    let ob = (await q("GET", `obiettivo?select=id,gradino,data_gara&atleta_id=eq.${A}&stato=eq.aperto&order=aperto_il.desc&limit=1`))[0];
+    if (ob && (ob.gradino !== gradino || ob.data_gara !== dataGara)){
+      await q("PATCH", `obiettivo?id=eq.${ob.id}`, {stato:"traslato", chiuso_il:new Date().toISOString(), motivo_chiusura:"cambio nel setup", regola_id:"L3"}, "return=minimal");
+      ob = null;
+    }
+    if (!ob) ob = (await q("POST", "obiettivo", [{atleta_id:A, gradino, data_gara:dataGara, stato:"aperto", regola_id:"L1"}]))[0];
+    const numero = (shadow.versione ? shadow.versione.numero : 0) + 1;
+    const ver = (await q("POST", "piano_versione", [{atleta_id:A, obiettivo_id:ob.id, numero, valida_da:oggi(),
+      regola_innesco: numero === 1 ? "G1" : "R1", esito: numero === 1 ? "prima_generazione" : "modificato", parametri:parametri()}]))[0];
+    const zona = new Map(); (LIB.varianti || []).forEach(v => zona.set(v.cod, v.zona)); (LIB.workouts || []).forEach(w => zona.set(w.cod, w.zona));
+    const righe = [];
+    for (const w of p.weeks) for (const s of w.sed) righe.push({ versione_id:ver.id, data:addDays(w.from, DAYS.indexOf(s.giorno)), settimana:w.w, fase:w.fase || null,
+      disciplina: s.cod === "BRICK" ? "Brick" : (PRESCR_DISC[s.disc] || "Corsa"), stimolo:s.ob, zona: s.cod === "BRICK" ? "Z3" : (zona.get(s.cod) || null),
+      durata_min: Math.max(1, Math.round(s.tempo)), carico_previsto: Math.round(s.rtss * 10) / 10, variante_cod: s.cod, costo: s.costo || null, stato:"prevista", regola_id:"G1" });
+    for (let i = 0; i < righe.length; i += 500) await q("POST", "seduta_prescritta", righe.slice(i, i + 500), "return=minimal");
+    await q("POST", "decisione", [{atleta_id:A, versione_id:ver.id, data:oggi(), tipo:"generazione", regola_id:"I8",
+      dettaglio:{arrivo:p.scala.arrivo, vincolo:p.scala.vincolo, intro:p.scala.intro, non_assorbite:p.scala.non_assorbite,
+        blocchi:p.scala.blocchi.map(b => ({gradino:b.gradino, settimane:b.settimane, picco:b.picco})), sedute:righe.length}}], "return=minimal");
+    shadow.versione = {id:ver.id, numero, parametri:parametri(), obiettivo_id:ob.id};
+  }
+  const pend = new Set(); let timer = null;
+  function persist(part){
+    pend.add(part); setSave("pending", "salvataggio…"); clearTimeout(timer); timer = setTimeout(flush, 800);
+  }
+  async function flush(){
+    const parts = [...pend]; pend.clear();
+    try{ for (const p of parts) if (SYNC[p]) await SYNC[p](); errore = ""; setSave("", `sincronizzato · ${sess.user.email}`); }
+    catch(e){ errore = e.message; setSave("off", "errore di salvataggio"); console.error(e); }
+  }
+
+  /* ---------- avvio ---------- */
+  async function avvia(){
+    try{ const raw = localStorage.getItem(SESS_LS); if (raw) sess = JSON.parse(raw); }catch(e){}
+    if (!sess){ setSave("off", "non connesso · salvato su questo browser"); return; }
+    try{ await dopoLogin(); }
+    catch(e){ errore = e.message; stato = "errore"; setSave("off", "non connesso · salvato su questo browser"); render(); }
+  }
+  return { attivo, avvia, login, registra, logout, persist, flush,
+    email: () => sess && sess.user.email, stato: () => stato, errore: () => errore,
+    versione: () => shadow.versione };
+})();
 </script>
 <script>
 "use strict";
@@ -1199,7 +1436,19 @@ function vSetup(){
   const f = (k,lab,unit,step,extra) => `<label class="fld">${lab} <span class="u">${unit||""}</span>
     <input data-s="${k}" type="number" step="${step||1}" value="${st[k]}">${extra?`<span class="u">${extra}</span>`:""}</label>`;
   $("#tbA").innerHTML = `<button class="btn danger" id="reset">Ripristina i valori di partenza</button>`;
-  $("#view").innerHTML = bannerPiano() + `
+  const account = inClaude() ? "" : `
+  <div class="panel"><header><h2>Account</h2>
+    <span class="note">${SB.attivo() ? `connesso come ${esc(SB.email())}: diario, test, recupero e piano sono nel database` : "senza accesso i dati restano in questo browser"}</span>
+    <span class="spacer"></span>${SB.attivo() ? `<button class="btn sm" id="sbOut">Esci</button>` : ""}</header>
+    ${SB.attivo() ? "" : `<div class="body grid g4">
+      <label class="fld">Email<input id="sbEmail" type="email" autocomplete="username" placeholder="tu@esempio.it"></label>
+      <label class="fld">Password<input id="sbPw" type="password" autocomplete="current-password" placeholder="almeno 6 caratteri"></label>
+      <div class="fld" style="justify-content:flex-end;flex-direction:row;gap:8px;align-items:flex-end">
+        <button class="btn pri" id="sbIn">Accedi</button><button class="btn" id="sbUp">Registrati</button></div>
+      <div class="fld" style="justify-content:flex-end"><span class="u" id="sbMsg" style="color:${SB.errore()?"var(--crit)":"inherit"}">${esc(SB.errore() || "")}</span></div>
+    </div>`}
+  </div>`;
+  $("#view").innerHTML = bannerPiano() + account + `
   <p class="hint">Sei numeri decidono il piano: quale gradino hai già fatto, quante settimane mancano alla gara (dalla data),
   quante ore puoi dedicare e se sono un tetto rigido, quante ne fai oggi. Il motore applica la dottrina e dice
   fin dove si arriva. Le soglie tarano zone e TSS del diario.</p>
@@ -1256,6 +1505,14 @@ function vSetup(){
     st[k] = inp.type==="number" ? (+inp.value||0) : inp.type==="checkbox" ? inp.checked : inp.value;
     persist("config"); render(); }; });
   const rl = $("#reloadLib2"); if (rl) rl.onclick = async()=>{ await caricaLibrerie(true); render(); };
+  const sbMsg = (t, err) => { const m = $("#sbMsg"); if (m){ m.textContent = t; m.style.color = err ? "var(--crit)" : "inherit"; } };
+  const sbGo = async (fn) => { const email = ($("#sbEmail").value||"").trim(), pw = $("#sbPw").value||"";
+    if (!email || pw.length < 6) return sbMsg("servono email e una password di almeno 6 caratteri", true);
+    sbMsg("un momento…"); try{ const r = await fn(email, pw); if (r) sbMsg(r); if (!SB.attivo()) return; render(); }catch(e){ sbMsg(e.message, true); } };
+  if ($("#sbIn")) $("#sbIn").onclick = () => sbGo(SB.login);
+  if ($("#sbUp")) $("#sbUp").onclick = () => sbGo(SB.registra);
+  if ($("#sbPw")) $("#sbPw").onkeydown = e => { if (e.key === "Enter") sbGo(SB.login); };
+  if ($("#sbOut")) $("#sbOut").onclick = async () => { await SB.logout(); render(); };
   $("#reset").onclick = ()=>{ S.setup = {...SETUP0}; S.note = {}; S.cal = {}; persist("config"); persist("calendar"); render(); };
 }
 boot();

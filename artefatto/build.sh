@@ -6,7 +6,7 @@
 #                      Netlify…), con engine.js accanto. Fuori da claude.ai le librerie
 #                      arrivano da Supabase via REST con la chiave pubblica.
 cd "$(dirname "$0")"
-cat 01_head.html 02_model.html 03_charts.html 04_views.html > ironman226.html
+cat 01_head.html 02_model.html 02b_supabase.html 03_charts.html 04_views.html > ironman226.html
 cp ../engine/dist/engine.js engine.js
 mkdir -p ../site
 {

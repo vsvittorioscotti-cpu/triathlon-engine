@@ -424,7 +424,19 @@ function vSetup(){
   const f = (k,lab,unit,step,extra) => `<label class="fld">${lab} <span class="u">${unit||""}</span>
     <input data-s="${k}" type="number" step="${step||1}" value="${st[k]}">${extra?`<span class="u">${extra}</span>`:""}</label>`;
   $("#tbA").innerHTML = `<button class="btn danger" id="reset">Ripristina i valori di partenza</button>`;
-  $("#view").innerHTML = bannerPiano() + `
+  const account = inClaude() ? "" : `
+  <div class="panel"><header><h2>Account</h2>
+    <span class="note">${SB.attivo() ? `connesso come ${esc(SB.email())}: diario, test, recupero e piano sono nel database` : "senza accesso i dati restano in questo browser"}</span>
+    <span class="spacer"></span>${SB.attivo() ? `<button class="btn sm" id="sbOut">Esci</button>` : ""}</header>
+    ${SB.attivo() ? "" : `<div class="body grid g4">
+      <label class="fld">Email<input id="sbEmail" type="email" autocomplete="username" placeholder="tu@esempio.it"></label>
+      <label class="fld">Password<input id="sbPw" type="password" autocomplete="current-password" placeholder="almeno 6 caratteri"></label>
+      <div class="fld" style="justify-content:flex-end;flex-direction:row;gap:8px;align-items:flex-end">
+        <button class="btn pri" id="sbIn">Accedi</button><button class="btn" id="sbUp">Registrati</button></div>
+      <div class="fld" style="justify-content:flex-end"><span class="u" id="sbMsg" style="color:${SB.errore()?"var(--crit)":"inherit"}">${esc(SB.errore() || "")}</span></div>
+    </div>`}
+  </div>`;
+  $("#view").innerHTML = bannerPiano() + account + `
   <p class="hint">Sei numeri decidono il piano: quale gradino hai già fatto, quante settimane mancano alla gara (dalla data),
   quante ore puoi dedicare e se sono un tetto rigido, quante ne fai oggi. Il motore applica la dottrina e dice
   fin dove si arriva. Le soglie tarano zone e TSS del diario.</p>
@@ -481,6 +493,14 @@ function vSetup(){
     st[k] = inp.type==="number" ? (+inp.value||0) : inp.type==="checkbox" ? inp.checked : inp.value;
     persist("config"); render(); }; });
   const rl = $("#reloadLib2"); if (rl) rl.onclick = async()=>{ await caricaLibrerie(true); render(); };
+  const sbMsg = (t, err) => { const m = $("#sbMsg"); if (m){ m.textContent = t; m.style.color = err ? "var(--crit)" : "inherit"; } };
+  const sbGo = async (fn) => { const email = ($("#sbEmail").value||"").trim(), pw = $("#sbPw").value||"";
+    if (!email || pw.length < 6) return sbMsg("servono email e una password di almeno 6 caratteri", true);
+    sbMsg("un momento…"); try{ const r = await fn(email, pw); if (r) sbMsg(r); if (!SB.attivo()) return; render(); }catch(e){ sbMsg(e.message, true); } };
+  if ($("#sbIn")) $("#sbIn").onclick = () => sbGo(SB.login);
+  if ($("#sbUp")) $("#sbUp").onclick = () => sbGo(SB.registra);
+  if ($("#sbPw")) $("#sbPw").onkeydown = e => { if (e.key === "Enter") sbGo(SB.login); };
+  if ($("#sbOut")) $("#sbOut").onclick = async () => { await SB.logout(); render(); };
   $("#reset").onclick = ()=>{ S.setup = {...SETUP0}; S.note = {}; S.cal = {}; persist("config"); persist("calendar"); render(); };
 }
 boot();
