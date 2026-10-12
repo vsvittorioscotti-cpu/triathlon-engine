@@ -704,11 +704,13 @@ const SB = (() => {
     distanza_m: num(s.dist) === null ? null : (s.disc === "Nuoto" ? num(s.dist) : num(s.dist) * 1000),
     passo_s: num(s.pace), potenza_w: num(s.np), potenza_media_w: num(s.pw), fc_media: inRange(s.hrAvg, 0, 300), fc_max: inRange(s.hrMax, 0, 300),
     rpe: inRange(s.rpe, 0, 10), carico: sessionTSS(s), carico_dichiarato: s.tssOverride !== null && s.tssOverride !== undefined && s.tssOverride !== "",
-    fonte:"atleta", sensazione: nz(s.feel) || null, note: nz(s.note) || null });
+    fonte: s.fonte || "atleta", esterno_fonte: s.esterno_fonte || null, esterno_id: s.esterno_id || null, prescritta_id: s.prescritta_id || null,
+    sensazione: nz(s.feel) || null, note: nz(s.note) || null });
   const daSeduta = (r) => ({ id:r.id, date:r.data, disc: DISC_DA_DB[r.disciplina] || "Altro", tipo:r.tipo || "",
     min:r.durata_min, dist: r.distanza_m === null ? null : (r.disciplina === "Nuoto" ? +r.distanza_m : +r.distanza_m / 1000),
     pace: num(r.passo_s), np: num(r.potenza_w), pw: num(r.potenza_media_w), hrAvg: r.fc_media, hrMax: r.fc_max, rpe: r.rpe,
-    tssOverride: r.carico_dichiarato ? +r.carico : null, feel: r.sensazione || "", note: r.note || "" });
+    tssOverride: r.carico_dichiarato ? +r.carico : null, feel: r.sensazione || "", note: r.note || "",
+    fonte: r.fonte || "atleta", esterno_fonte: r.esterno_fonte || null, esterno_id: r.esterno_id || null, prescritta_id: r.prescritta_id || null });
   const discTest = (tipo) => /bici/i.test(tipo) ? "Ciclismo" : /corsa/i.test(tipo) ? "Corsa" : /nuoto/i.test(tipo) ? "Nuoto" : "Generale";
   const aTest = (t) => ({ id:t.id, atleta_id:atleta.id, data:t.date, disciplina:discTest(t.tipo || ""), protocollo:t.tipo || "Altro",
     risultato:{ val:num(t.val), unit:t.unit || null, hrAvg:num(t.hrAvg), hrMax:num(t.hrMax) }, note: nz(t.note) || null });
@@ -719,6 +721,39 @@ const SB = (() => {
   const daBen = (r) => ({ qSonno:r.sonno, fatica:r.fatica, stress:r.stress, peso:num(r.peso), fcRip:r.fc_riposo, hrv:r.hrv, sonno:num(r.sonno_ore), motiv:r.motivazione, note:r.note || "" });
   const profilo = () => ({ hrMax:S.setup.hrMax, hrRest:S.setup.hrRest, peso:S.setup.peso });
   const parametri = () => Object.fromEntries(PLAN_KEYS.map(k => [k, S.setup[k]]));
+
+  /* ---------- intervals.icu (terzo scrittore: dispositivo) ---------- */
+  let intervals = null;   // {athlete_id, ultimo_import, ultimo_esito} — la chiave non si rilegge
+  let importInCorso = false;
+  async function caricaIntervals(){
+    const r = await q("GET", `collegamento_intervals?select=athlete_id,ultimo_import,ultimo_esito&atleta_id=eq.${atleta.id}`);
+    intervals = r[0] || null;
+  }
+  async function salvaIntervals(athleteId, apiKey){
+    const riga = {atleta_id:atleta.id, athlete_id:(athleteId || "0").trim(), aggiornato_il:new Date().toISOString()};
+    if (apiKey) riga.api_key = apiKey.trim();
+    if (!intervals && !apiKey) throw new Error("serve la chiave API di intervals.icu");
+    await q("POST", "collegamento_intervals?on_conflict=atleta_id", [riga], "resolution=merge-duplicates,return=minimal");
+    await caricaIntervals();
+  }
+  async function importaIntervals(opts){
+    if (importInCorso) return null;
+    importInCorso = true;
+    try{
+      const t = await token();
+      const r = await fetch(`${REST.url}/functions/v1/intervals-import`, {method:"POST",
+        headers:{apikey:REST.key, Authorization:`Bearer ${t}`, "Content-Type":"application/json"}, body: JSON.stringify(opts || {})});
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(j.errore ? `${j.errore}${j.dettaglio ? " — " + j.dettaglio : ""}` : `errore ${r.status}`);
+      // rilegge le sedute: quelle importate arrivano con fonte = dispositivo
+      const se = await q("GET", `seduta_eseguita?select=*&atleta_id=eq.${atleta.id}&order=data.desc&limit=5000`);
+      S.sessions = se.map(daSeduta); shadow.sessions = Object.fromEntries(S.sessions.map(s => [s.id, JSON.stringify(s)]));
+      await caricaIntervals();
+      try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){}
+      return j;
+    } finally { importInCorso = false; }
+  }
+  const scaduto = (iso, ore) => !iso || (Date.now() - new Date(iso).getTime()) > ore * 3600000;
 
   /* ---------- caricamento al login ---------- */
   async function dopoLogin(){
@@ -736,6 +771,10 @@ const SB = (() => {
     if (!shadow.versione) daPortare.push("config");
     stato = "connesso"; PLAN_CACHE.key = null; render();
     if (daPortare.length) daPortare.forEach(persist); else setSave("", `sincronizzato · ${sess.user.email}`);
+    // import automatico da intervals.icu se l'ultimo risale a più di 6 ore fa
+    if (intervals && scaduto(intervals.ultimo_import, 6)){
+      try{ await importaIntervals(); render(); }catch(e){ console.warn("intervals:", e.message); }
+    }
   }
   async function carica(){
     let rows = await q("GET", `atleta?select=id,nome,profilo&user_id=eq.${sess.user.id}`);
@@ -762,6 +801,7 @@ const SB = (() => {
     S.note = {}; S.cal = {};
     for (const r of an){ if (r.chiave === "note") S.note = r.valore || {}; if (r.chiave === "cal") S.cal = r.valore || {}; }
     shadow.note = JSON.stringify(S.note); shadow.cal = JSON.stringify(S.cal);
+    await caricaIntervals();
   }
 
   /* ---------- sincronizzazione per differenza ---------- */
@@ -851,6 +891,7 @@ const SB = (() => {
     catch(e){ errore = e.message; stato = "errore"; setSave("off", "non connesso · salvato su questo browser"); render(); }
   }
   return { attivo, avvia, login, registra, logout, persist, flush,
+    intervals: () => intervals, salvaIntervals, importaIntervals, importInCorso: () => importInCorso,
     email: () => sess && sess.user.email, stato: () => stato, errore: () => errore,
     versione: () => shadow.versione };
 })();
@@ -1290,11 +1331,11 @@ function vDiario(){
       <th class="num">TSS</th><th>Sensaz.</th><th>Note</th><th></th></tr></thead>
     <tbody>${list.map(s=>{
       const auto = sessionTSS({...s, tssOverride:null});
-      return `<tr data-id="${s.id}">
+      return `<tr data-id="${s.id}" ${s.fonte==="dispositivo"?'title="importata da intervals.icu"':""}>
       ${SESS_COLS.map(([k,,t,wd])=>{
         if (t==="date") return `<td><input type="date" data-k="${k}" value="${esc(s.date)}" style="width:${wd}px"></td>`;
         if (t==="sel"){ const L = k==="disc"?DISC:(TIPI.includes(s[k])||!s[k]?TIPI:[s[k],...TIPI]);
-          return `<td><select data-k="${k}" style="width:${wd}px">${opts(L, s[k])}</select></td>`; }
+          return `<td><select data-k="${k}" style="width:${wd}px">${opts(L, s[k])}</select>${k==="disc"&&s.fonte==="dispositivo"?'<span class="dim" title="da intervals.icu"> ⟳</span>':""}</td>`; }
         return `<td class="num"><input type="number" data-k="${k}" value="${s[k]??""}" style="width:${wd}px"
           step="${k==="dist"?"0.1":"1"}"></td>`;}).join("")}
       <td class="num"><input type="number" data-k="tssOverride" value="${s.tssOverride ?? auto}"
@@ -1449,7 +1490,18 @@ function vSetup(){
       <div class="fld" style="justify-content:flex-end"><span class="u" id="sbMsg" style="color:${SB.errore()?"var(--crit)":"inherit"}">${esc(SB.errore() || "")}</span></div>
     </div>`}
   </div>`;
-  $("#view").innerHTML = bannerPiano() + account + `
+  const iv = SB.attivo() ? SB.intervals() : null;
+  const intervalsPanel = (inClaude() || !SB.attivo()) ? "" : `
+  <div class="panel"><header><h2>intervals.icu</h2>
+    <span class="note">${iv ? `collegato (atleta ${esc(iv.athlete_id)}) · ultimo import ${iv.ultimo_import ? esc(fmtFull(iv.ultimo_import.slice(0,10)) + " " + iv.ultimo_import.slice(11,16)) : "mai"}${iv.ultimo_esito ? " · " + esc(iv.ultimo_esito) : ""}` : "le attività registrate dall'orologio arrivano nel diario da sole (fonte: dispositivo)"}</span>
+    <span class="spacer"></span>${iv ? `<button class="btn sm pri" id="ivImport" ${SB.importInCorso()?"disabled":""}>Importa ora</button>` : ""}</header>
+    <div class="body grid g4">
+      <label class="fld">Athlete ID <span class="u">lascia 0 per l'atleta della chiave</span><input id="ivId" value="${esc(iv ? iv.athlete_id : "0")}"></label>
+      <label class="fld">Chiave API <span class="u">intervals.icu → Settings → Developer</span><input id="ivKey" type="password" placeholder="${iv ? "già salvata — scrivi solo per cambiarla" : "incolla la chiave"}"></label>
+      <div class="fld" style="justify-content:flex-end;flex-direction:row;gap:8px;align-items:flex-end"><button class="btn" id="ivSave">${iv ? "Aggiorna" : "Collega"}</button></div>
+      <div class="fld" style="justify-content:flex-end"><span class="u" id="ivMsg"></span></div>
+    </div></div>`;
+  $("#view").innerHTML = bannerPiano() + account + intervalsPanel + `
   <p class="hint">Sei numeri decidono il piano: quale gradino hai già fatto, quante settimane mancano alla gara (dalla data),
   quante ore puoi dedicare e se sono un tetto rigido, quante ne fai oggi. Il motore applica la dottrina e dice
   fin dove si arriva. Le soglie tarano zone e TSS del diario.</p>
@@ -1514,6 +1566,10 @@ function vSetup(){
   if ($("#sbUp")) $("#sbUp").onclick = () => sbGo(SB.registra);
   if ($("#sbPw")) $("#sbPw").onkeydown = e => { if (e.key === "Enter") sbGo(SB.login); };
   if ($("#sbOut")) $("#sbOut").onclick = async () => { await SB.logout(); render(); };
+  const ivMsg = (t, err) => { const m = $("#ivMsg"); if (m){ m.textContent = t; m.style.color = err ? "var(--crit)" : "inherit"; } };
+  if ($("#ivSave")) $("#ivSave").onclick = async () => { ivMsg("salvo…"); try{ await SB.salvaIntervals($("#ivId").value, $("#ivKey").value); render(); }catch(e){ ivMsg(e.message, true); } };
+  if ($("#ivImport")) $("#ivImport").onclick = async () => { ivMsg("importo da intervals.icu…"); $("#ivImport").disabled = true;
+    try{ const j = await SB.importaIntervals({oldest: addDays(todayISO(), -90)}); render(); }catch(e){ ivMsg(e.message, true); $("#ivImport").disabled = false; } };
   $("#reset").onclick = ()=>{ S.setup = {...SETUP0}; S.note = {}; S.cal = {}; persist("config"); persist("calendar"); render(); };
 }
 boot();

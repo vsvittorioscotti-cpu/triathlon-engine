@@ -82,11 +82,13 @@ const SB = (() => {
     distanza_m: num(s.dist) === null ? null : (s.disc === "Nuoto" ? num(s.dist) : num(s.dist) * 1000),
     passo_s: num(s.pace), potenza_w: num(s.np), potenza_media_w: num(s.pw), fc_media: inRange(s.hrAvg, 0, 300), fc_max: inRange(s.hrMax, 0, 300),
     rpe: inRange(s.rpe, 0, 10), carico: sessionTSS(s), carico_dichiarato: s.tssOverride !== null && s.tssOverride !== undefined && s.tssOverride !== "",
-    fonte:"atleta", sensazione: nz(s.feel) || null, note: nz(s.note) || null });
+    fonte: s.fonte || "atleta", esterno_fonte: s.esterno_fonte || null, esterno_id: s.esterno_id || null, prescritta_id: s.prescritta_id || null,
+    sensazione: nz(s.feel) || null, note: nz(s.note) || null });
   const daSeduta = (r) => ({ id:r.id, date:r.data, disc: DISC_DA_DB[r.disciplina] || "Altro", tipo:r.tipo || "",
     min:r.durata_min, dist: r.distanza_m === null ? null : (r.disciplina === "Nuoto" ? +r.distanza_m : +r.distanza_m / 1000),
     pace: num(r.passo_s), np: num(r.potenza_w), pw: num(r.potenza_media_w), hrAvg: r.fc_media, hrMax: r.fc_max, rpe: r.rpe,
-    tssOverride: r.carico_dichiarato ? +r.carico : null, feel: r.sensazione || "", note: r.note || "" });
+    tssOverride: r.carico_dichiarato ? +r.carico : null, feel: r.sensazione || "", note: r.note || "",
+    fonte: r.fonte || "atleta", esterno_fonte: r.esterno_fonte || null, esterno_id: r.esterno_id || null, prescritta_id: r.prescritta_id || null });
   const discTest = (tipo) => /bici/i.test(tipo) ? "Ciclismo" : /corsa/i.test(tipo) ? "Corsa" : /nuoto/i.test(tipo) ? "Nuoto" : "Generale";
   const aTest = (t) => ({ id:t.id, atleta_id:atleta.id, data:t.date, disciplina:discTest(t.tipo || ""), protocollo:t.tipo || "Altro",
     risultato:{ val:num(t.val), unit:t.unit || null, hrAvg:num(t.hrAvg), hrMax:num(t.hrMax) }, note: nz(t.note) || null });
@@ -97,6 +99,39 @@ const SB = (() => {
   const daBen = (r) => ({ qSonno:r.sonno, fatica:r.fatica, stress:r.stress, peso:num(r.peso), fcRip:r.fc_riposo, hrv:r.hrv, sonno:num(r.sonno_ore), motiv:r.motivazione, note:r.note || "" });
   const profilo = () => ({ hrMax:S.setup.hrMax, hrRest:S.setup.hrRest, peso:S.setup.peso });
   const parametri = () => Object.fromEntries(PLAN_KEYS.map(k => [k, S.setup[k]]));
+
+  /* ---------- intervals.icu (terzo scrittore: dispositivo) ---------- */
+  let intervals = null;   // {athlete_id, ultimo_import, ultimo_esito} — la chiave non si rilegge
+  let importInCorso = false;
+  async function caricaIntervals(){
+    const r = await q("GET", `collegamento_intervals?select=athlete_id,ultimo_import,ultimo_esito&atleta_id=eq.${atleta.id}`);
+    intervals = r[0] || null;
+  }
+  async function salvaIntervals(athleteId, apiKey){
+    const riga = {atleta_id:atleta.id, athlete_id:(athleteId || "0").trim(), aggiornato_il:new Date().toISOString()};
+    if (apiKey) riga.api_key = apiKey.trim();
+    if (!intervals && !apiKey) throw new Error("serve la chiave API di intervals.icu");
+    await q("POST", "collegamento_intervals?on_conflict=atleta_id", [riga], "resolution=merge-duplicates,return=minimal");
+    await caricaIntervals();
+  }
+  async function importaIntervals(opts){
+    if (importInCorso) return null;
+    importInCorso = true;
+    try{
+      const t = await token();
+      const r = await fetch(`${REST.url}/functions/v1/intervals-import`, {method:"POST",
+        headers:{apikey:REST.key, Authorization:`Bearer ${t}`, "Content-Type":"application/json"}, body: JSON.stringify(opts || {})});
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(j.errore ? `${j.errore}${j.dettaglio ? " — " + j.dettaglio : ""}` : `errore ${r.status}`);
+      // rilegge le sedute: quelle importate arrivano con fonte = dispositivo
+      const se = await q("GET", `seduta_eseguita?select=*&atleta_id=eq.${atleta.id}&order=data.desc&limit=5000`);
+      S.sessions = se.map(daSeduta); shadow.sessions = Object.fromEntries(S.sessions.map(s => [s.id, JSON.stringify(s)]));
+      await caricaIntervals();
+      try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){}
+      return j;
+    } finally { importInCorso = false; }
+  }
+  const scaduto = (iso, ore) => !iso || (Date.now() - new Date(iso).getTime()) > ore * 3600000;
 
   /* ---------- caricamento al login ---------- */
   async function dopoLogin(){
@@ -114,6 +149,10 @@ const SB = (() => {
     if (!shadow.versione) daPortare.push("config");
     stato = "connesso"; PLAN_CACHE.key = null; render();
     if (daPortare.length) daPortare.forEach(persist); else setSave("", `sincronizzato · ${sess.user.email}`);
+    // import automatico da intervals.icu se l'ultimo risale a più di 6 ore fa
+    if (intervals && scaduto(intervals.ultimo_import, 6)){
+      try{ await importaIntervals(); render(); }catch(e){ console.warn("intervals:", e.message); }
+    }
   }
   async function carica(){
     let rows = await q("GET", `atleta?select=id,nome,profilo&user_id=eq.${sess.user.id}`);
@@ -140,6 +179,7 @@ const SB = (() => {
     S.note = {}; S.cal = {};
     for (const r of an){ if (r.chiave === "note") S.note = r.valore || {}; if (r.chiave === "cal") S.cal = r.valore || {}; }
     shadow.note = JSON.stringify(S.note); shadow.cal = JSON.stringify(S.cal);
+    await caricaIntervals();
   }
 
   /* ---------- sincronizzazione per differenza ---------- */
@@ -229,6 +269,7 @@ const SB = (() => {
     catch(e){ errore = e.message; stato = "errore"; setSave("off", "non connesso · salvato su questo browser"); render(); }
   }
   return { attivo, avvia, login, registra, logout, persist, flush,
+    intervals: () => intervals, salvaIntervals, importaIntervals, importInCorso: () => importInCorso,
     email: () => sess && sess.user.email, stato: () => stato, errore: () => errore,
     versione: () => shadow.versione };
 })();

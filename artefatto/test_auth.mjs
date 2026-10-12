@@ -19,9 +19,9 @@ function parseCsv(txt){ const rows=[];let row=[],cell="",q=false;
 const DB = {
   variante: parseCsv(readFileSync("/home/claude/te/csv/variante.csv","utf8")).sort((a,b)=>a.cod<b.cod?-1:1),
   workout_forza: parseCsv(readFileSync("/home/claude/te/csv/workout_forza.csv","utf8")),
-  atleta:[], obiettivo:[], test:[], soglia:[], piano_versione:[], seduta_prescritta:[], seduta_eseguita:[], benessere:[], annotazione:[], decisione:[]
+  atleta:[], obiettivo:[], test:[], soglia:[], piano_versione:[], seduta_prescritta:[], seduta_eseguita:[], benessere:[], annotazione:[], decisione:[], collegamento_intervals:[]
 };
-const PK = { benessere:["atleta_id","data"], annotazione:["atleta_id","chiave"] };
+const PK = { benessere:["atleta_id","data"], annotazione:["atleta_id","chiave"], collegamento_intervals:["atleta_id"] };
 const USER = { id: randomUUID(), email:"vittorio@esempio.it", pw:"segreto1" };
 const log = [];
 const readBody = req => new Promise(res => { let d=""; req.on("data", c => d += c); req.on("end", () => res(d ? JSON.parse(d) : null)); });
@@ -46,6 +46,17 @@ const srv = http.createServer(async (req,res)=>{
     if (u.search.includes("password")) return (b.email===USER.email && b.password===USER.pw) ? json(200, sess) : json(400, {error_description:"Invalid login credentials"});
     if (u.search.includes("refresh_token")) return json(200, sess);
     return json(404, {});
+  }
+  if (u.pathname === "/functions/v1/intervals-import"){
+    const auth = req.headers.authorization || ""; await readBody(req); log.push("FN intervals-import "+(auth.startsWith("Bearer tok")?"[user]":"[anon]"));
+    if (req.method === "OPTIONS"){ res.statusCode = 204; return res.end(); }
+    const col = DB.collegamento_intervals[0]; if (!col) return json(400, {errore:"intervals.icu non collegato"});
+    const a = DB.atleta[0];
+    const row = { id: randomUUID(), atleta_id:a.id, esterno_fonte:"intervals", esterno_id:"i123", data:new Date().toISOString().slice(0,10), disciplina:"Corsa", tipo:"Morning Run",
+      durata_min:48, distanza_m:9000, passo_s:320, fc_media:150, fc_max:171, rpe:6, carico:62, carico_dichiarato:true, fonte:"dispositivo", sensazione:"Buona", note:"Run", creato_il:new Date().toISOString() };
+    const i = DB.seduta_eseguita.findIndex(x => x.esterno_id === "i123"); if (i >= 0) DB.seduta_eseguita[i] = {...DB.seduta_eseguita[i], ...row, id: DB.seduta_eseguita[i].id}; else DB.seduta_eseguita.push(row);
+    col.ultimo_import = new Date().toISOString(); col.ultimo_esito = "1 attività";
+    return json(200, {ok:true, scritte:1});
   }
   if (u.pathname.startsWith("/rest/v1/")){
     const t = u.pathname.split("/").pop(); const sp = u.searchParams; const b = await readBody(req);
@@ -116,6 +127,16 @@ console.log("versioni:", DB.piano_versione.map(v=>[v.numero, v.esito, v.parametr
 console.log("soglie:", DB.soglia.map(s=>[s.disciplina,s.tipo,s.valore]), "benessere:", DB.benessere[0]);
 console.log("eseguita modificata:", DB.seduta_eseguita.map(s=>[s.disciplina, s.durata_min, s.carico, s.carico_dichiarato]));
 console.log("dot:", await page.evaluate(() => document.getElementById("saveDot").textContent), "errore:", await page.evaluate(() => SB.errore()));
+
+// 3b. intervals.icu: collega, importa, verifica che la sessione importata resti "dispositivo" anche dopo una modifica
+await page.evaluate(() => { view = "setup"; render(); });
+await page.fill("#ivId", "0"); await page.fill("#ivKey", "chiave-finta"); await page.click("#ivSave"); await page.waitForTimeout(600);
+console.log("collegamento:", DB.collegamento_intervals.map(c => [c.athlete_id, c.api_key]));
+await page.click("#ivImport"); await page.waitForTimeout(1200);
+console.log("dopo import:", await page.evaluate(() => ({ n: S.sessions.length, disp: S.sessions.filter(s => s.fonte === "dispositivo").map(s => [s.disc, s.tipo, s.min, s.tssOverride]), iv: SB.intervals() && SB.intervals().ultimo_esito })));
+await page.evaluate(() => { const s = S.sessions.find(x => x.fonte === "dispositivo"); s.note = "modificata a mano"; persist("sessions"); });
+await page.waitForTimeout(1500);
+console.log("riga dispositivo nel DB:", DB.seduta_eseguita.filter(x => x.esterno_id).map(x => [x.fonte, x.esterno_id, x.note]));
 
 // 4. ricarica la pagina: la sessione resta e i dati tornano dal database
 await page.reload(); await page.waitForFunction(() => SB.attivo(), null, {timeout: 15000}); await page.waitForTimeout(1000);
