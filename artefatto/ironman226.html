@@ -729,10 +729,11 @@ const SB = (() => {
     intervals = r[0] || null;
   }
   async function salvaIntervals(athleteId, apiKey){
-    const riga = {atleta_id:atleta.id, athlete_id:(athleteId || "0").trim(), aggiornato_il:new Date().toISOString()};
-    if (apiKey) riga.api_key = apiKey.trim();
-    if (!intervals && !apiKey) throw new Error("serve la chiave API di intervals.icu");
-    await q("POST", "collegamento_intervals?on_conflict=atleta_id", [riga], "resolution=merge-duplicates,return=minimal");
+    const riga = {athlete_id:(athleteId || "0").trim(), aggiornato_il:new Date().toISOString()};
+    if (apiKey && apiKey.trim()) riga.api_key = apiKey.trim();
+    if (!intervals && !riga.api_key) throw new Error("serve la chiave API di intervals.icu");
+    if (intervals) await q("PATCH", `collegamento_intervals?atleta_id=eq.${atleta.id}`, riga, "return=minimal");   // la chiave resta quella salvata se il campo è vuoto
+    else await q("POST", "collegamento_intervals", [{atleta_id:atleta.id, ...riga}], "return=minimal");
     await caricaIntervals();
   }
   async function importaIntervals(opts){
