@@ -1328,11 +1328,12 @@ function vDiario(){
   Per forza, camminata, tennis e sessioni senza dati usa l'RPE (ore × RPE² × 2 — 1 h a RPE 7 ≈ 98 TSS).
   Scrivi il passo in secondi: al km per la corsa, ogni 100 m per il nuoto. Puoi sempre sovrascrivere il TSS col dato del tuo orologio.</p>
   <div class="panel">${list.length ? `<div class="tw" style="max-height:74vh;overflow-y:auto"><table class="dense">
-    <thead><tr>${SESS_COLS.map(c=>`<th class="${c[2]==="num"?"num":""}">${c[1]}</th>`).join("")}
-      <th class="num">TSS</th><th>Sensaz.</th><th>Note</th><th></th></tr></thead>
+    <thead><tr><th></th>${SESS_COLS.map(c=>`<th class="${c[2]==="num"?"num":""}">${c[1]}</th>`).join("")}
+      <th class="num">TSS</th><th>Sensaz.</th><th>Note</th></tr></thead>
     <tbody>${list.map(s=>{
       const auto = sessionTSS({...s, tssOverride:null});
       return `<tr data-id="${s.id}" ${s.fonte==="dispositivo"?'title="importata da intervals.icu"':""}>
+      <td><button class="btn sm danger" data-del="${s.id}" title="Elimina questa sessione">✕</button></td>
       ${SESS_COLS.map(([k,,t,wd])=>{
         if (t==="date") return `<td><input type="date" data-k="${k}" value="${esc(s.date)}" style="width:${wd}px"></td>`;
         if (t==="sel"){ const L = k==="disc"?DISC:(TIPI.includes(s[k])||!s[k]?TIPI:[s[k],...TIPI]);
@@ -1343,8 +1344,7 @@ function vDiario(){
         title="Calcolato: ${auto}. Sovrascrivi col dato del tuo orologio se ce l'hai."
         style="width:54px;font-weight:600"></td>
       <td><select data-k="feel" style="width:88px"><option value=""></option>${opts(FEEL,s.feel)}</select></td>
-      <td><input data-k="note" value="${esc(s.note)}" style="min-width:150px"></td>
-      <td><button class="btn sm danger" data-del="${s.id}" title="Elimina">✕</button></td></tr>`;}).join("")}
+      <td><input data-k="note" value="${esc(s.note)}" style="min-width:120px"></td></tr>`;}).join("")}
     </tbody></table></div>` : `<div class="empty">Nessuna sessione registrata.<br>
       Aggiungine una qui sopra, oppure aprila dal Calendario con «registra» sotto una seduta pianificata.</div>`}
   </div>`;
@@ -1357,8 +1357,9 @@ function vDiario(){
       s[k] = (inp.type==="number") ? (v===""?null:+v) : v;
       if (k==="tssOverride" && s.tssOverride === sessionTSS({...s, tssOverride:null})) s.tssOverride = null;
       persist("sessions"); render(); }; });
-    tr.querySelector("[data-del]").onclick = ()=>{ S.sessions = S.sessions.filter(x=>x.id!==s.id);
-      persist("sessions"); render(); };
+    tr.querySelector("[data-del]").onclick = ()=>{
+      if (!confirm(`Eliminare la sessione del ${fmtFull(s.date)} (${s.disc}, ${s.min||0} min)?`)) return;
+      S.sessions = S.sessions.filter(x=>x.id!==s.id); persist("sessions"); render(); };
   });
 }
 
