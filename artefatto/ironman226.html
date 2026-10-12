@@ -1569,7 +1569,7 @@ function vSetup(){
   const ivMsg = (t, err) => { const m = $("#ivMsg"); if (m){ m.textContent = t; m.style.color = err ? "var(--crit)" : "inherit"; } };
   if ($("#ivSave")) $("#ivSave").onclick = async () => { ivMsg("salvo…"); try{ await SB.salvaIntervals($("#ivId").value, $("#ivKey").value); render(); }catch(e){ ivMsg(e.message, true); } };
   if ($("#ivImport")) $("#ivImport").onclick = async () => { ivMsg("importo da intervals.icu…"); $("#ivImport").disabled = true;
-    try{ const j = await SB.importaIntervals({oldest: addDays(todayISO(), -90)}); render(); }catch(e){ ivMsg(e.message, true); $("#ivImport").disabled = false; } };
+    try{ const j = await SB.importaIntervals({oldest: addDays(todayISO(), -180)}); render(); }catch(e){ ivMsg(e.message, true); $("#ivImport").disabled = false; } };
   $("#reset").onclick = ()=>{ S.setup = {...SETUP0}; S.note = {}; S.cal = {}; persist("config"); persist("calendar"); render(); };
 }
 boot();

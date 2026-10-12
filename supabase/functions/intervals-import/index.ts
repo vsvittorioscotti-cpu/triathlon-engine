@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
   const newest = body.newest || giorno(oggi);
   let oldest = body.oldest;
   if (!oldest) {
-    const base = col.ultimo_import ? new Date(col.ultimo_import) : new Date(oggi.getTime() - 90 * 86400000);
+    const base = col.ultimo_import ? new Date(col.ultimo_import) : new Date(oggi.getTime() - 180 * 86400000);
     oldest = giorno(new Date(base.getTime() - 7 * 86400000)); // una settimana di sovrapposizione: le attività si rivedono
   }
 
